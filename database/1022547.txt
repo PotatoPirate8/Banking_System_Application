@@ -1,0 +1,6 @@
+Name: Wong Jun Han
+ID: 080808103591
+Account Type: Savings
+PIN: 1234
+Account Number: 1022547
+Initial Deposit: 0.00

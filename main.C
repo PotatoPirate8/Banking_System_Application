@@ -270,13 +270,172 @@ create_account:
     fprintf(fptr, "Initial Deposit: %.2f\n", initial_deposit);
     fclose(fptr);
 
+    // Add entry to index file
+    FILE *index_file = fopen("database/index.txt", "a");
+    if (index_file != NULL) {
+        fprintf(index_file, "%d|%s|%s|%s\n", bank_account_number, name, id, account_type);
+        fclose(index_file);
+    } else {
+        fprintf(stderr, "Warning: Could not update index file\n");
+    }
+
     printf("Created your new bank account successfully!\n");
     return 0; // Success
 }
 
 int Delete_Bank_Account(void) {
-    // Placeholder implementation
-    printf("Deleting a bank account...\n");
+    FILE *index_file = fopen("database/index.txt", "r");
+    if (index_file == NULL) {
+        printf("No accounts found in the database.\n");
+        return -1;
+    }
+
+    // Read all accounts from index file
+    int account_numbers[1000];
+    char names[1000][100];
+    char ids[1000][20];
+    char account_types[1000][20];
+    int count = 0;
+
+    char line[512];
+    while (fgets(line, sizeof(line), index_file) && count < 1000) {
+        // Parse: AccountNumber|Name|ID|AccountType
+        if (sscanf(line, "%d|%99[^|]|%19[^|]|%19[^\n]", 
+                   &account_numbers[count], names[count], ids[count], account_types[count]) == 4) {
+            count++;
+        }
+    }
+    fclose(index_file);
+
+    if (count == 0) {
+        printf("No accounts found in the database.\n");
+        return -1;
+    }
+
+    // Display all accounts
+    printf("\n========================================\n");
+    printf("       Existing Bank Accounts\n");
+    printf("========================================\n");
+    for (int i = 0; i < count; i++) {
+        printf("%d. Account Number: %d\n", i + 1, account_numbers[i]);
+        printf("   Name: %s\n", names[i]);
+        printf("   Account Type: %s\n", account_types[i]);
+        printf("----------------------------------------\n");
+    }
+
+    // Ask user to select account
+    int choice;
+    printf("\nEnter the number of the account to delete (1-%d), or 0 to cancel: ", count);
+    if (scanf("%d", &choice) != 1) {
+        while (getchar() != '\n');
+        printf("Invalid input.\n");
+        return -1;
+    }
+    while (getchar() != '\n'); // Clear newline
+
+    if (choice == 0) {
+        printf("Account deletion cancelled.\n");
+        return 0;
+    }
+
+    if (choice < 1 || choice > count) {
+        printf("Invalid choice.\n");
+        return -1;
+    }
+
+    int selected_index = choice - 1;
+    int account_to_delete = account_numbers[selected_index];
+
+    printf("\nYou selected:\n");
+    printf("Account Number: %d\n", account_to_delete);
+    printf("Name: %s\n", names[selected_index]);
+    printf("Account Type: %s\n", account_types[selected_index]);
+
+    // Verify with last 4 digits of ID and PIN
+    char id_last4[100];  // Larger buffer to catch excess input
+    char pin_input[100];
+
+    printf("\nFor security, please verify:\n");
+    printf("Enter the last 4 digits of your ID: ");
+    fgets(id_last4, sizeof(id_last4), stdin);
+    id_last4[strcspn(id_last4, "\n")] = 0;
+
+    // Get last 4 characters of stored ID
+    char *stored_id = ids[selected_index];
+    int id_len = strlen(stored_id);
+    char *actual_last4 = (id_len >= 4) ? &stored_id[id_len - 4] : stored_id;
+
+    if (strcmp(id_last4, actual_last4) != 0) {
+        printf("ID verification failed. Account deletion cancelled.\n");
+        return -1;
+    }
+
+    // Read PIN from account file
+    char filename[100];
+    sprintf(filename, "database/%d.txt", account_to_delete);
+    FILE *account_file = fopen(filename, "r");
+    if (account_file == NULL) {
+        printf("Error: Account file not found.\n");
+        return -1;
+    }
+
+    char stored_pin[100] = "";
+    while (fgets(line, sizeof(line), account_file)) {
+        if (strncmp(line, "PIN: ", 5) == 0) {
+            sscanf(line, "PIN: %s", stored_pin);
+            break;
+        }
+    }
+    fclose(account_file);
+
+    printf("Enter your 4-digit PIN: ");
+    fgets(pin_input, sizeof(pin_input), stdin);
+    pin_input[strcspn(pin_input, "\n")] = 0;
+
+    if (strcmp(pin_input, stored_pin) != 0) {
+        printf("PIN verification failed. Account deletion cancelled.\n");
+        return -1;
+    }
+
+    // Final confirmation
+    char confirm[10];
+    printf("\nAre you sure you want to permanently delete this account? (yes/no): ");
+    fgets(confirm, sizeof(confirm), stdin);
+    confirm[strcspn(confirm, "\n")] = 0;
+
+    if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
+        printf("Account deletion cancelled.\n");
+        return 0;
+    }
+
+    // Delete the account file
+    if (remove(filename) != 0) {
+        printf("Error: Could not delete account file.\n");
+        return -1;
+    }
+
+    // Update index file - remove the deleted account
+    FILE *temp_index = fopen("database/index_temp.txt", "w");
+    if (temp_index == NULL) {
+        printf("Error: Could not update index file.\n");
+        return -1;
+    }
+
+    for (int i = 0; i < count; i++) {
+        if (i != selected_index) {
+            fprintf(temp_index, "%d|%s|%s|%s\n", 
+                    account_numbers[i], names[i], ids[i], account_types[i]);
+        }
+    }
+    fclose(temp_index);
+
+    // Replace old index with new one
+    remove("database/index.txt");
+    rename("database/index_temp.txt", "database/index.txt");
+
+    printf("\nAccount %d has been successfully deleted.\n", account_to_delete);
+    printf("All associated data has been removed from the system.\n");
+
     return 0; // Success
 }
 
@@ -306,7 +465,7 @@ int main(void) {
     while (1) {
         printf("\nBank Account Management System\n");
         printf("--------------------------------\n");
-        /* Show session info: current date/time and count of loaded accounts (from accounts.txt) */
+        /* Show session info: current date/time and count of loaded accounts from index */
         {
             time_t now = time(NULL);
             char timebuf[64] = "Unknown time";
@@ -316,7 +475,7 @@ int main(void) {
             }
 
             int loaded_accounts = 0;
-            FILE *fa = fopen("accounts.txt", "r");
+            FILE *fa = fopen("database/index.txt", "r");
             if (fa) {
                 char line[512];
                 while (fgets(line, sizeof(line), fa)) {
