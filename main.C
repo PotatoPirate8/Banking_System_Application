@@ -9,29 +9,57 @@
 #include <limits.h>
 
 int Create_New_Bank_Account(void) {
-    // Placeholder implementation
 
+    // Enter Name, ID, Account Type, PIN
     printf("Enter name: ");
     char name[100];
     fgets(name, sizeof(name), stdin);
-    name[strcspn(name, "\n")] = 0;  // Remove newline character
+    name[strcspn(name, "\n")] = 0;  
 
     printf("Enter Identification Number (ID): ");
     char id[20];
     fgets(id, sizeof(id), stdin);
-    id[strcspn(id, "\n")] = 0;  // Remove newline character
+    id[strcspn(id, "\n")] = 0;  
 
     printf("Type of Account (Savings or Current) : ");
     char account_type[20];
     fgets(account_type, sizeof(account_type), stdin);
-    account_type[strcspn(account_type, "\n")] = 0;  // Remove newline character
+    account_type[strcspn(account_type, "\n")] = 0;  
 
     printf("Create 4-digit PIN: ");
     char pin[5];
     fgets(pin, sizeof(pin), stdin);
-    pin[strcspn(pin, "\n")] = 0;  // Remove newline character
+    pin[strcspn(pin, "\n")] = 0; 
 
-    printf("Creating a new bank account...\n");
+    // Generate Random Bank Account Number
+    int bank_account_number = rand() % (999999999 - 1000000 + 1) + 1000000; // Random 7 to 9 digit number
+    printf("Your Bank Account Number is: %d\n", bank_account_number);
+
+    // Initial Deposit
+    double initial_deposit = 0.00;
+
+    // Save account details to a file named with the bank account number
+    char filename[50];
+    sprintf(filename, "%d.txt", bank_account_number);
+    FILE *fptr;
+    fptr = fopen(filename, "w");
+
+    // Check if file opened successfully
+    if (fptr == NULL) {
+        fprintf(stderr, "Error opening file: %s\n", strerror(errno));
+        return -1; // Indicate failure
+    }
+
+    // Write account details to the file
+    fprintf(fptr, "Name: %s\n", name);
+    fprintf(fptr, "ID: %s\n", id);
+    fprintf(fptr, "Account Type: %s\n", account_type);
+    fprintf(fptr, "PIN: %s\n", pin);
+    fprintf(fptr, "Account Number: %d\n", bank_account_number);
+    fprintf(fptr, "Initial Deposit: %.2f\n", initial_deposit);
+    fclose(fptr);
+
+    printf("Created your new bank account...\n");
     return 0; // Success
 }
 
@@ -60,6 +88,9 @@ int Remittance(void) {
 }
 
 int main(void) {
+    // Seed the random number generator
+    srand(time(NULL));
+    
     int choice;
     while (1) {
         printf("\nBank Account Management System\n");
@@ -101,6 +132,7 @@ int main(void) {
             while (getchar() != '\n'); // Clear invalid input
             continue;
         }
+        while (getchar() != '\n'); 
 
         switch (choice) {
             case 1:
