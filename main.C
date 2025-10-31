@@ -57,7 +57,7 @@ int validate_account_type(const char *type) {
 // Helper function to validate PIN (exactly 4 digits)
 int validate_pin(const char *pin) {
     if (strlen(pin) != 4) {
-        return 0; // Not 4 characters
+        return 0; // Not exactly 4 characters
     }
     for (int i = 0; i < 4; i++) {
         if (!isdigit((unsigned char)pin[i])) {
@@ -67,15 +67,13 @@ int validate_pin(const char *pin) {
     return 1; // Valid
 }
 
-// ==================== BANK ACCOUNT FUNCTIONS ====================
+// ==================== INPUT HELPER FUNCTIONS ====================
 
-int Create_New_Bank_Account(void) {
-
-    // Enter and validate Name
-    char name[100];
+// Get and validate name input
+void get_name_input(char *name, size_t size) {
     while (1) {
         printf("Enter name (letters and spaces only): ");
-        fgets(name, sizeof(name), stdin);
+        fgets(name, size, stdin);
         name[strcspn(name, "\n")] = 0;
         
         if (validate_name(name)) {
@@ -83,12 +81,13 @@ int Create_New_Bank_Account(void) {
         }
         printf("Invalid name! Please use only letters and spaces.\n");
     }
+}
 
-    // Enter and validate ID
-    char id[20];
+// Get and validate ID input
+void get_id_input(char *id, size_t size) {
     while (1) {
         printf("Enter Identification Number (digits only): ");
-        fgets(id, sizeof(id), stdin);
+        fgets(id, size, stdin);
         id[strcspn(id, "\n")] = 0;
         
         if (validate_id(id)) {
@@ -96,12 +95,13 @@ int Create_New_Bank_Account(void) {
         }
         printf("Invalid ID! Please enter digits only.\n");
     }
+}
 
-    // Enter and validate Account Type
-    char account_type[20];
+// Get and validate account type input
+void get_account_type_input(char *account_type, size_t size) {
     while (1) {
         printf("Type of Account (Savings or Current): ");
-        fgets(account_type, sizeof(account_type), stdin);
+        fgets(account_type, size, stdin);
         account_type[strcspn(account_type, "\n")] = 0;
         
         if (validate_account_type(account_type)) {
@@ -115,12 +115,13 @@ int Create_New_Bank_Account(void) {
         }
         printf("Invalid account type! Please enter 'Savings' or 'Current'.\n");
     }
+}
 
-    // Enter and validate PIN
-    char pin[5];
+// Get and validate PIN input
+void get_pin_input(char *pin, size_t size) {
     while (1) {
         printf("Create 4-digit PIN: ");
-        fgets(pin, sizeof(pin), stdin);
+        fgets(pin, size, stdin);
         pin[strcspn(pin, "\n")] = 0;
         
         if (validate_pin(pin)) {
@@ -128,7 +129,98 @@ int Create_New_Bank_Account(void) {
         }
         printf("Invalid PIN! Please enter exactly 4 digits.\n");
     }
+}
 
+// ==================== BANK ACCOUNT FUNCTIONS ====================
+
+int Create_New_Bank_Account(void) {
+
+    // Get user inputs with validation
+    char name[100];
+    char id[20];
+    char account_type[20];
+    char pin[100];
+    char confirm[10];
+    int choice;
+
+    // Initial input collection
+    get_name_input(name, sizeof(name));
+    get_id_input(id, sizeof(id));
+    get_account_type_input(account_type, sizeof(account_type));
+    get_pin_input(pin, sizeof(pin));
+
+    // Loop until user confirms all information is correct
+    while (1) {
+        // Display summary for confirmation
+        printf("\n===========================================\n");
+        printf("         Account Information Review        \n");
+        printf("===========================================\n");
+        printf("Name:          %s\n", name);
+        printf("ID:            %s\n", id);
+        printf("Account Type:  %s\n", account_type);
+        printf("PIN:           %s\n", pin);
+        printf("===========================================\n");
+        
+        // Ask for confirmation
+        while (1) {
+            printf("\nIs all information correct? (yes/no): ");
+            fgets(confirm, sizeof(confirm), stdin);
+            confirm[strcspn(confirm, "\n")] = 0;
+            
+            if (strcasecmp(confirm, "yes") == 0 || strcasecmp(confirm, "y") == 0) {
+                goto create_account;  // Proceed to account creation
+            } else if (strcasecmp(confirm, "no") == 0 || strcasecmp(confirm, "n") == 0) {
+                // Ask what to edit
+                printf("\nWhat would you like to edit?\n");
+                printf("1. Name\n");
+                printf("2. ID\n");
+                printf("3. Account Type\n");
+                printf("4. PIN\n");
+                printf("5. Re-enter all information\n");
+                printf("6. Cancel account creation\n");
+                printf("Enter your choice: ");
+                
+                if (scanf("%d", &choice) != 1) {
+                    while (getchar() != '\n'); // Clear input
+                    printf("Invalid choice. Please try again.\n");
+                    continue;
+                }
+                while (getchar() != '\n'); // Clear newline
+                
+                switch (choice) {
+                    case 1:
+                        get_name_input(name, sizeof(name));
+                        break;
+                    case 2:
+                        get_id_input(id, sizeof(id));
+                        break;
+                    case 3:
+                        get_account_type_input(account_type, sizeof(account_type));
+                        break;
+                    case 4:
+                        get_pin_input(pin, sizeof(pin));
+                        break;
+                    case 5:
+                        // Re-enter all information
+                        get_name_input(name, sizeof(name));
+                        get_id_input(id, sizeof(id));
+                        get_account_type_input(account_type, sizeof(account_type));
+                        get_pin_input(pin, sizeof(pin));
+                        break;
+                    case 6:
+                        printf("Account creation cancelled.\n");
+                        return 0;
+                    default:
+                        printf("Invalid choice.\n");
+                }
+                break; // Break inner loop to show summary again
+            } else {
+                printf("Invalid input. Please enter 'yes' or 'no'.\n");
+            }
+        }
+    }
+
+create_account:
     // Create database directory if it doesn't exist (ignore error if already exists)
     mkdir("database");
 
