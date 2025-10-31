@@ -356,9 +356,35 @@ int Delete_Bank_Account(void) {
     char pin_input[100];
 
     printf("\nFor security, please verify:\n");
-    printf("Enter the last 4 digits of your ID: ");
-    fgets(id_last4, sizeof(id_last4), stdin);
-    id_last4[strcspn(id_last4, "\n")] = 0;
+    
+    // Validate last 4 digits of ID
+    while (1) {
+        printf("Enter the last 4 digits of your ID: ");
+        fgets(id_last4, sizeof(id_last4), stdin);
+        id_last4[strcspn(id_last4, "\n")] = 0;
+
+        // Validate that input is exactly 4 digits
+        if (strlen(id_last4) != 4) {
+            printf("Error: Please enter exactly 4 digits.\n");
+            continue;
+        }
+
+        // Check if all characters are digits
+        int valid = 1;
+        for (int i = 0; i < 4; i++) {
+            if (!isdigit((unsigned char)id_last4[i])) {
+                valid = 0;
+                break;
+            }
+        }
+
+        if (!valid) {
+            printf("Error: ID must contain only digits.\n");
+            continue;
+        }
+
+        break; // Valid input
+    }
 
     // Get last 4 characters of stored ID
     char *stored_id = ids[selected_index];
@@ -388,9 +414,20 @@ int Delete_Bank_Account(void) {
     }
     fclose(account_file);
 
-    printf("Enter your 4-digit PIN: ");
-    fgets(pin_input, sizeof(pin_input), stdin);
-    pin_input[strcspn(pin_input, "\n")] = 0;
+    // Validate PIN input
+    while (1) {
+        printf("Enter your 4-digit PIN: ");
+        fgets(pin_input, sizeof(pin_input), stdin);
+        pin_input[strcspn(pin_input, "\n")] = 0;
+
+        // Validate PIN format
+        if (!validate_pin(pin_input)) {
+            printf("Error: PIN must be exactly 4 digits.\n");
+            continue;
+        }
+
+        break; // Valid format
+    }
 
     if (strcmp(pin_input, stored_pin) != 0) {
         printf("PIN verification failed. Account deletion cancelled.\n");
@@ -440,8 +477,194 @@ int Delete_Bank_Account(void) {
 }
 
 int Deposit_Money(void) {
-    // Placeholder implementation
-    printf("Depositing money into the account...\n");
+    // Get and validate account number
+    int account_number;
+    char account_input[100];
+    
+    printf("\n========================================\n");
+    printf("          Deposit Money\n");
+    printf("========================================\n");
+    
+    while (1) {
+        printf("Enter your account number: ");
+        fgets(account_input, sizeof(account_input), stdin);
+        account_input[strcspn(account_input, "\n")] = 0;
+
+        // Validate numeric input
+        char *endptr;
+        long temp = strtol(account_input, &endptr, 10);
+        
+        if (*endptr != '\0' || account_input[0] == '\0') {
+            printf("Error: Account number must contain only digits.\n");
+            continue;
+        }
+
+        if (temp < 1000000 || temp > 999999999) {
+            printf("Error: Invalid account number format.\n");
+            continue;
+        }
+
+        account_number = (int)temp;
+        break; // Valid account number
+    }
+
+    // Check if account exists
+    char filename[100];
+    sprintf(filename, "database/%d.txt", account_number);
+    FILE *account_file = fopen(filename, "r");
+    if (account_file == NULL) {
+        printf("Error: Account not found.\n");
+        return -1;
+    }
+
+    // Read account details
+    char line[512];
+    char stored_pin[100] = "";
+    char name[100] = "";
+    char account_type[20] = "";
+    double current_balance = 0.00;
+
+    while (fgets(line, sizeof(line), account_file)) {
+        if (strncmp(line, "PIN: ", 5) == 0) {
+            sscanf(line, "PIN: %s", stored_pin);
+        } else if (strncmp(line, "Name: ", 6) == 0) {
+            sscanf(line, "Name: %99[^\n]", name);
+        } else if (strncmp(line, "Account Type: ", 14) == 0) {
+            sscanf(line, "Account Type: %s", account_type);
+        } else if (strncmp(line, "Initial Deposit: ", 17) == 0) {
+            sscanf(line, "Initial Deposit: %lf", &current_balance);
+        } else if (strncmp(line, "Current Balance: ", 17) == 0) {
+            sscanf(line, "Current Balance: %lf", &current_balance);
+        }
+    }
+    fclose(account_file);
+
+    // Authenticate with PIN
+    char pin_input[100];
+    
+    while (1) {
+        printf("Enter your 4-digit PIN: ");
+        fgets(pin_input, sizeof(pin_input), stdin);
+        pin_input[strcspn(pin_input, "\n")] = 0;
+
+        // Validate PIN format
+        if (!validate_pin(pin_input)) {
+            printf("Error: PIN must be exactly 4 digits.\n");
+            continue;
+        }
+
+        break; // Valid format
+    }
+
+    if (strcmp(pin_input, stored_pin) != 0) {
+        printf("PIN verification failed. Access denied.\n");
+        return -1;
+    }
+
+    // Display account info
+    printf("\n========================================\n");
+    printf("Account Number: %d\n", account_number);
+    printf("Name: %s\n", name);
+    printf("Account Type: %s\n", account_type);
+    printf("Current Balance: RM %.2f\n", current_balance);
+    printf("========================================\n");
+
+    // Get deposit amount
+    double deposit_amount;
+    char amount_str[100];
+    
+    while (1) {
+        printf("\nEnter amount to deposit (RM0.01 - RM50,000.00): RM ");
+        fgets(amount_str, sizeof(amount_str), stdin);
+        amount_str[strcspn(amount_str, "\n")] = 0;
+
+        // Convert to double
+        char *endptr;
+        deposit_amount = strtod(amount_str, &endptr);
+
+        // Validate input
+        if (*endptr != '\0' || amount_str[0] == '\0') {
+            printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        if (deposit_amount <= 0) {
+            printf("Amount must be greater than RM0.00\n");
+            continue;
+        }
+
+        if (deposit_amount > 50000.00) {
+            printf("Amount must not exceed RM50,000.00 per transaction.\n");
+            continue;
+        }
+
+        break; // Valid amount
+    }
+
+    // Calculate new balance
+    double new_balance = current_balance + deposit_amount;
+
+    // Confirm transaction
+    char confirm[10];
+    printf("\n========================================\n");
+    printf("Transaction Summary:\n");
+    printf("Deposit Amount: RM %.2f\n", deposit_amount);
+    printf("Current Balance: RM %.2f\n", current_balance);
+    printf("New Balance: RM %.2f\n", new_balance);
+    printf("========================================\n");
+    printf("Confirm deposit? (yes/no): ");
+    fgets(confirm, sizeof(confirm), stdin);
+    confirm[strcspn(confirm, "\n")] = 0;
+
+    if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
+        printf("Deposit cancelled.\n");
+        return 0;
+    }
+
+    // Update account file with new balance
+    account_file = fopen(filename, "r");
+    if (account_file == NULL) {
+        printf("Error: Could not open account file.\n");
+        return -1;
+    }
+
+    // Read all content and update balance
+    FILE *temp_file = fopen("database/temp_account.txt", "w");
+    if (temp_file == NULL) {
+        fclose(account_file);
+        printf("Error: Could not create temporary file.\n");
+        return -1;
+    }
+
+    int balance_updated = 0;
+    while (fgets(line, sizeof(line), account_file)) {
+        if (strncmp(line, "Initial Deposit: ", 17) == 0 || 
+            strncmp(line, "Current Balance: ", 17) == 0) {
+            fprintf(temp_file, "Current Balance: %.2f\n", new_balance);
+            balance_updated = 1;
+        } else {
+            fputs(line, temp_file);
+        }
+    }
+
+    // If no balance line existed, add it
+    if (!balance_updated) {
+        fprintf(temp_file, "Current Balance: %.2f\n", new_balance);
+    }
+
+    fclose(account_file);
+    fclose(temp_file);
+
+    // Replace old file with updated file
+    remove(filename);
+    rename("database/temp_account.txt", filename);
+
+    printf("\n========================================\n");
+    printf("Deposit Successful!\n");
+    printf("Amount Deposited: RM %.2f\n", deposit_amount);
+    printf("New Balance: RM %.2f\n", new_balance);
+    printf("========================================\n");
+
     return 0; // Success
 }
 
