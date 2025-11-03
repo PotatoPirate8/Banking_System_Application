@@ -74,10 +74,16 @@ int validate_pin(const char *pin) {
     return 1; // Valid
 }
 
-// Helper function to validate monetary amount (max 2 decimal places)
+// Helper function to validate monetary amount (max 2 decimal places and reasonable length)
 int validate_money_format(const char *amount_str) {
     if (strlen(amount_str) == 0) {
         return 0; // Empty string
+    }
+
+    // Check for extremely long input that could cause overflow
+    // Maximum reasonable: 999999999.99 (9 digits + decimal + 2 decimals = 12 chars max)
+    if (strlen(amount_str) > 20) {
+        return 0; // Input too long, likely to overflow
     }
 
     int decimal_count = 0;
@@ -104,6 +110,27 @@ int validate_money_format(const char *amount_str) {
     }
 
     return has_digit; // Valid if at least one digit present
+}
+
+// Helper function to validate monetary value is within acceptable range
+// Maximum value: RM 999,999,999.99 (reasonable limit for banking operations)
+int validate_money_value(double amount) {
+    const double MAX_MONEY_VALUE = 999999999.99;
+    
+    if (amount < 0.0) {
+        return 0; // Negative value
+    }
+    
+    if (amount > MAX_MONEY_VALUE) {
+        return 0; // Exceeds maximum allowed value
+    }
+    
+    // Check for NaN or infinity
+    if (isnan(amount) || isinf(amount)) {
+        return 0; // Invalid floating-point value
+    }
+    
+    return 1; // Valid
 }
 
 // ==================== INPUT HELPER FUNCTIONS ====================
@@ -365,13 +392,37 @@ create_account:
     fprintf(fptr, "Initial Deposit: %.2f\n", initial_deposit);
     fclose(fptr);
 
-    // Add entry to index file
-    FILE *index_file = fopen("database/index.txt", "a");
-    if (index_file != NULL) {
-        fprintf(index_file, "%d|%s|%s|%s\n", bank_account_number, name, id, account_type);
-        fclose(index_file);
+    // Add entry to index file using atomic write to prevent corruption
+    // Step 1: Read existing index content
+    FILE *index_read = fopen("database/index.txt", "r");
+    FILE *index_temp = fopen("database/index_temp.txt", "w");
+    
+    if (index_temp == NULL) {
+        fprintf(stderr, "Warning: Could not create temporary index file\n");
+        // Account file is created, but index update failed
+        // The account still exists, just not in index
     } else {
-        fprintf(stderr, "Warning: Could not update index file\n");
+        // Copy existing index entries to temp file
+        if (index_read != NULL) {
+            char line[512];
+            while (fgets(line, sizeof(line), index_read)) {
+                fputs(line, index_temp);
+            }
+            fclose(index_read);
+        }
+        
+        // Add new entry
+        fprintf(index_temp, "%d|%s|%s|%s\n", bank_account_number, name, id, account_type);
+        fclose(index_temp);
+        
+        // Step 2: Atomically replace old index with new one
+        // On Windows, need to remove first before rename
+        remove("database/index.txt");
+        if (rename("database/index_temp.txt", "database/index.txt") != 0) {
+            fprintf(stderr, "Warning: Could not update index file\n");
+            // Cleanup temp file
+            remove("database/index_temp.txt");
+        }
     }
 
     printf("Created your new bank account successfully!\n");
@@ -561,9 +612,20 @@ int Delete_Bank_Account(void) {
     }
     fclose(temp_index);
 
-    // Replace old index with new one
-    remove("database/index.txt");
-    rename("database/index_temp.txt", "database/index.txt");
+    // Atomically replace old index with new one
+    // On Windows, must remove before rename
+    if (remove("database/index.txt") != 0) {
+        printf("Warning: Could not remove old index file.\n");
+        // Try to continue anyway
+    }
+    
+    if (rename("database/index_temp.txt", "database/index.txt") != 0) {
+        printf("Error: Could not update index file. Index may be corrupted.\n");
+        printf("However, account file has been deleted successfully.\n");
+        // Cleanup temp file if rename failed
+        remove("database/index_temp.txt");
+        return -1;
+    }
 
     printf("\nAccount %d has been successfully deleted.\n", account_to_delete);
     printf("All associated data has been removed from the system.\n");
@@ -681,11 +743,24 @@ int Deposit_Money(void) {
 
         // Convert to double
         char *endptr;
+        errno = 0; // Reset errno before conversion
         deposit_amount = strtod(amount_str, &endptr);
+
+        // Check for conversion errors
+        if (errno == ERANGE) {
+            printf("Error: Amount is too large or caused an overflow.\n");
+            continue;
+        }
 
         // Validate input
         if (*endptr != '\0' || amount_str[0] == '\0') {
             printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        // Validate the monetary value is within acceptable range
+        if (!validate_money_value(deposit_amount)) {
+            printf("Error: Amount must be between RM0.01 and RM999,999,999.99\n");
             continue;
         }
 
@@ -885,11 +960,24 @@ int Withdraw_Money(void) {
 
         // Convert to double
         char *endptr;
+        errno = 0; // Reset errno before conversion
         withdrawal_amount = strtod(amount_str, &endptr);
+
+        // Check for conversion errors
+        if (errno == ERANGE) {
+            printf("Error: Amount is too large or caused an overflow.\n");
+            continue;
+        }
 
         // Validate input
         if (*endptr != '\0' || amount_str[0] == '\0') {
             printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        // Validate the monetary value is within acceptable range
+        if (!validate_money_value(withdrawal_amount)) {
+            printf("Error: Amount must be between RM0.01 and RM999,999,999.99\n");
             continue;
         }
 
@@ -1163,11 +1251,24 @@ int Remittance(void) {
 
         // Convert to double
         char *endptr;
+        errno = 0; // Reset errno before conversion
         transfer_amount = strtod(amount_str, &endptr);
+
+        // Check for conversion errors
+        if (errno == ERANGE) {
+            printf("Error: Amount is too large or caused an overflow.\n");
+            continue;
+        }
 
         // Validate input
         if (*endptr != '\0' || amount_str[0] == '\0') {
             printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        // Validate the monetary value is within acceptable range
+        if (!validate_money_value(transfer_amount)) {
+            printf("Error: Amount must be between RM0.01 and RM999,999,999.99\n");
             continue;
         }
 
