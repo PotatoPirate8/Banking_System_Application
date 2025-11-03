@@ -67,6 +67,38 @@ int validate_pin(const char *pin) {
     return 1; // Valid
 }
 
+// Helper function to validate monetary amount (max 2 decimal places)
+int validate_money_format(const char *amount_str) {
+    if (strlen(amount_str) == 0) {
+        return 0; // Empty string
+    }
+
+    int decimal_count = 0;
+    int digits_after_decimal = 0;
+    int has_digit = 0;
+
+    for (int i = 0; amount_str[i] != '\0'; i++) {
+        if (isdigit((unsigned char)amount_str[i])) {
+            has_digit = 1;
+            if (decimal_count > 0) {
+                digits_after_decimal++;
+                if (digits_after_decimal > 2) {
+                    return 0; // More than 2 decimal places
+                }
+            }
+        } else if (amount_str[i] == '.') {
+            decimal_count++;
+            if (decimal_count > 1) {
+                return 0; // Multiple decimal points
+            }
+        } else {
+            return 0; // Invalid character
+        }
+    }
+
+    return has_digit; // Valid if at least one digit present
+}
+
 // ==================== INPUT HELPER FUNCTIONS ====================
 
 // Get and validate name input
@@ -578,6 +610,12 @@ int Deposit_Money(void) {
         fgets(amount_str, sizeof(amount_str), stdin);
         amount_str[strcspn(amount_str, "\n")] = 0;
 
+        // Validate money format (max 2 decimal places)
+        if (!validate_money_format(amount_str)) {
+            printf("Invalid amount format. Please enter a valid number with maximum 2 decimal places.\n");
+            continue;
+        }
+
         // Convert to double
         char *endptr;
         deposit_amount = strtod(amount_str, &endptr);
@@ -775,6 +813,12 @@ int Withdraw_Money(void) {
         printf("\nEnter amount to withdraw: RM ");
         fgets(amount_str, sizeof(amount_str), stdin);
         amount_str[strcspn(amount_str, "\n")] = 0;
+
+        // Validate money format (max 2 decimal places)
+        if (!validate_money_format(amount_str)) {
+            printf("Invalid amount format. Please enter a valid number with maximum 2 decimal places.\n");
+            continue;
+        }
 
         // Convert to double
         char *endptr;
@@ -1042,6 +1086,12 @@ int Remittance(void) {
         printf("\nEnter amount to transfer: RM ");
         fgets(amount_str, sizeof(amount_str), stdin);
         amount_str[strcspn(amount_str, "\n")] = 0;
+
+        // Validate money format (max 2 decimal places)
+        if (!validate_money_format(amount_str)) {
+            printf("Invalid amount format. Please enter a valid number with maximum 2 decimal places.\n");
+            continue;
+        }
 
         // Convert to double
         char *endptr;
