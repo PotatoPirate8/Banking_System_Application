@@ -867,8 +867,343 @@ int Withdraw_Money(void) {
 }
 
 int Remittance(void) {
-    // Placeholder implementation
-    printf("Transferring money to another account...\n");
+    // Get and validate sender's account number
+    int sender_account;
+    char account_input[100];
+    
+    printf("\n========================================\n");
+    printf("          Money Transfer\n");
+    printf("========================================\n");
+    
+    while (1) {
+        printf("Enter your account number (sender): ");
+        fgets(account_input, sizeof(account_input), stdin);
+        account_input[strcspn(account_input, "\n")] = 0;
+
+        // Validate numeric input
+        char *endptr;
+        long temp = strtol(account_input, &endptr, 10);
+        
+        if (*endptr != '\0' || account_input[0] == '\0') {
+            printf("Error: Account number must contain only digits.\n");
+            continue;
+        }
+
+        if (temp < 1000000 || temp > 999999999) {
+            printf("Error: Invalid account number format.\n");
+            continue;
+        }
+
+        sender_account = (int)temp;
+        break; // Valid account number
+    }
+
+    // Check if sender's account exists
+    char sender_filename[100];
+    sprintf(sender_filename, "database/%d.txt", sender_account);
+    FILE *sender_file = fopen(sender_filename, "r");
+    if (sender_file == NULL) {
+        printf("Error: Sender account not found.\n");
+        return -1;
+    }
+
+    // Read sender's account details
+    char line[512];
+    char sender_pin[100] = "";
+    char sender_name[100] = "";
+    char sender_type[20] = "";
+    double sender_balance = 0.00;
+
+    while (fgets(line, sizeof(line), sender_file)) {
+        if (strncmp(line, "PIN: ", 5) == 0) {
+            sscanf(line, "PIN: %s", sender_pin);
+        } else if (strncmp(line, "Name: ", 6) == 0) {
+            sscanf(line, "Name: %99[^\n]", sender_name);
+        } else if (strncmp(line, "Account Type: ", 14) == 0) {
+            sscanf(line, "Account Type: %s", sender_type);
+        } else if (strncmp(line, "Initial Deposit: ", 17) == 0) {
+            sscanf(line, "Initial Deposit: %lf", &sender_balance);
+        } else if (strncmp(line, "Current Balance: ", 17) == 0) {
+            sscanf(line, "Current Balance: %lf", &sender_balance);
+        }
+    }
+    fclose(sender_file);
+
+    // Authenticate sender with PIN
+    char pin_input[100];
+    
+    while (1) {
+        printf("Enter your 4-digit PIN: ");
+        fgets(pin_input, sizeof(pin_input), stdin);
+        pin_input[strcspn(pin_input, "\n")] = 0;
+
+        // Validate PIN format
+        if (!validate_pin(pin_input)) {
+            printf("Error: PIN must be exactly 4 digits.\n");
+            continue;
+        }
+
+        break; // Valid format
+    }
+
+    if (strcmp(pin_input, sender_pin) != 0) {
+        printf("PIN verification failed. Access denied.\n");
+        return -1;
+    }
+
+    // Display sender's account info
+    printf("\n========================================\n");
+    printf("Sender Account Details:\n");
+    printf("Account Number: %d\n", sender_account);
+    printf("Name: %s\n", sender_name);
+    printf("Account Type: %s\n", sender_type);
+    printf("Available Balance: RM %.2f\n", sender_balance);
+    printf("========================================\n");
+
+    // Check if sender has sufficient balance
+    if (sender_balance <= 0) {
+        printf("\nInsufficient balance. Cannot process transfer.\n");
+        return -1;
+    }
+
+    // Get and validate receiver's account number
+    int receiver_account;
+    
+    while (1) {
+        printf("\nEnter receiver's account number: ");
+        fgets(account_input, sizeof(account_input), stdin);
+        account_input[strcspn(account_input, "\n")] = 0;
+
+        // Validate numeric input
+        char *endptr;
+        long temp = strtol(account_input, &endptr, 10);
+        
+        if (*endptr != '\0' || account_input[0] == '\0') {
+            printf("Error: Account number must contain only digits.\n");
+            continue;
+        }
+
+        if (temp < 1000000 || temp > 999999999) {
+            printf("Error: Invalid account number format.\n");
+            continue;
+        }
+
+        receiver_account = (int)temp;
+
+        // Check that accounts are distinct
+        if (receiver_account == sender_account) {
+            printf("Error: Cannot transfer to the same account.\n");
+            continue;
+        }
+
+        break; // Valid account number
+    }
+
+    // Check if receiver's account exists
+    char receiver_filename[100];
+    sprintf(receiver_filename, "database/%d.txt", receiver_account);
+    FILE *receiver_file = fopen(receiver_filename, "r");
+    if (receiver_file == NULL) {
+        printf("Error: Receiver account not found.\n");
+        return -1;
+    }
+
+    // Read receiver's account details
+    char receiver_name[100] = "";
+    char receiver_type[20] = "";
+    double receiver_balance = 0.00;
+
+    while (fgets(line, sizeof(line), receiver_file)) {
+        if (strncmp(line, "Name: ", 6) == 0) {
+            sscanf(line, "Name: %99[^\n]", receiver_name);
+        } else if (strncmp(line, "Account Type: ", 14) == 0) {
+            sscanf(line, "Account Type: %s", receiver_type);
+        } else if (strncmp(line, "Initial Deposit: ", 17) == 0) {
+            sscanf(line, "Initial Deposit: %lf", &receiver_balance);
+        } else if (strncmp(line, "Current Balance: ", 17) == 0) {
+            sscanf(line, "Current Balance: %lf", &receiver_balance);
+        }
+    }
+    fclose(receiver_file);
+
+    // Display receiver's account info
+    printf("\n========================================\n");
+    printf("Receiver Account Details:\n");
+    printf("Account Number: %d\n", receiver_account);
+    printf("Name: %s\n", receiver_name);
+    printf("Account Type: %s\n", receiver_type);
+    printf("========================================\n");
+
+    // Get transfer amount
+    double transfer_amount;
+    char amount_str[100];
+    
+    while (1) {
+        printf("\nEnter amount to transfer: RM ");
+        fgets(amount_str, sizeof(amount_str), stdin);
+        amount_str[strcspn(amount_str, "\n")] = 0;
+
+        // Convert to double
+        char *endptr;
+        transfer_amount = strtod(amount_str, &endptr);
+
+        // Validate input
+        if (*endptr != '\0' || amount_str[0] == '\0') {
+            printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        if (transfer_amount <= 0) {
+            printf("Amount must be greater than RM0.00\n");
+            continue;
+        }
+
+        break; // Valid amount
+    }
+
+    // Calculate remittance fee based on account types
+    double fee_percentage = 0.0;
+    double remittance_fee = 0.0;
+    
+    if (strcasecmp(sender_type, "Savings") == 0 && strcasecmp(receiver_type, "Current") == 0) {
+        fee_percentage = 2.0; // 2% fee for Savings to Current
+        remittance_fee = transfer_amount * 0.02;
+    } else if (strcasecmp(sender_type, "Current") == 0 && strcasecmp(receiver_type, "Savings") == 0) {
+        fee_percentage = 3.0; // 3% fee for Current to Savings
+        remittance_fee = transfer_amount * 0.03;
+    }
+    // No fee for same account type transfers
+
+    // Calculate total deduction from sender (transfer amount + fee)
+    double total_deduction = transfer_amount + remittance_fee;
+
+    // Check if sender has sufficient balance for transfer + fee
+    if (total_deduction > sender_balance) {
+        printf("\nInsufficient balance. Required: RM %.2f (Transfer: RM %.2f + Fee: RM %.2f)\n", 
+               total_deduction, transfer_amount, remittance_fee);
+        printf("Available balance: RM %.2f\n", sender_balance);
+        return -1;
+    }
+
+    // Calculate new balances
+    double sender_new_balance = sender_balance - total_deduction;
+    double receiver_new_balance = receiver_balance + transfer_amount;
+
+    // Display transaction summary
+    printf("\n========================================\n");
+    printf("Transaction Summary:\n");
+    printf("----------------------------------------\n");
+    printf("From: %s (Account: %d)\n", sender_name, sender_account);
+    printf("To: %s (Account: %d)\n", receiver_name, receiver_account);
+    printf("----------------------------------------\n");
+    printf("Transfer Amount: RM %.2f\n", transfer_amount);
+    if (remittance_fee > 0) {
+        printf("Remittance Fee (%.0f%%): RM %.2f\n", fee_percentage, remittance_fee);
+        printf("Total Deduction: RM %.2f\n", total_deduction);
+    }
+    printf("----------------------------------------\n");
+    printf("Sender's Current Balance: RM %.2f\n", sender_balance);
+    printf("Sender's New Balance: RM %.2f\n", sender_new_balance);
+    printf("----------------------------------------\n");
+    printf("Receiver's Current Balance: RM %.2f\n", receiver_balance);
+    printf("Receiver's New Balance: RM %.2f\n", receiver_new_balance);
+    printf("========================================\n");
+
+    // Confirm transaction
+    char confirm[10];
+    printf("Confirm transfer? (yes/no): ");
+    fgets(confirm, sizeof(confirm), stdin);
+    confirm[strcspn(confirm, "\n")] = 0;
+
+    if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
+        printf("Transfer cancelled.\n");
+        return 0;
+    }
+
+    // Update sender's account file
+    sender_file = fopen(sender_filename, "r");
+    if (sender_file == NULL) {
+        printf("Error: Could not open sender's account file.\n");
+        return -1;
+    }
+
+    FILE *temp_file = fopen("database/temp_sender.txt", "w");
+    if (temp_file == NULL) {
+        fclose(sender_file);
+        printf("Error: Could not create temporary file.\n");
+        return -1;
+    }
+
+    int balance_updated = 0;
+    while (fgets(line, sizeof(line), sender_file)) {
+        if (strncmp(line, "Initial Deposit: ", 17) == 0 || 
+            strncmp(line, "Current Balance: ", 17) == 0) {
+            fprintf(temp_file, "Current Balance: %.2f\n", sender_new_balance);
+            balance_updated = 1;
+        } else {
+            fputs(line, temp_file);
+        }
+    }
+
+    if (!balance_updated) {
+        fprintf(temp_file, "Current Balance: %.2f\n", sender_new_balance);
+    }
+
+    fclose(sender_file);
+    fclose(temp_file);
+
+    remove(sender_filename);
+    rename("database/temp_sender.txt", sender_filename);
+
+    // Update receiver's account file
+    receiver_file = fopen(receiver_filename, "r");
+    if (receiver_file == NULL) {
+        printf("Error: Could not open receiver's account file.\n");
+        return -1;
+    }
+
+    temp_file = fopen("database/temp_receiver.txt", "w");
+    if (temp_file == NULL) {
+        fclose(receiver_file);
+        printf("Error: Could not create temporary file.\n");
+        return -1;
+    }
+
+    balance_updated = 0;
+    while (fgets(line, sizeof(line), receiver_file)) {
+        if (strncmp(line, "Initial Deposit: ", 17) == 0 || 
+            strncmp(line, "Current Balance: ", 17) == 0) {
+            fprintf(temp_file, "Current Balance: %.2f\n", receiver_new_balance);
+            balance_updated = 1;
+        } else {
+            fputs(line, temp_file);
+        }
+    }
+
+    if (!balance_updated) {
+        fprintf(temp_file, "Current Balance: %.2f\n", receiver_new_balance);
+    }
+
+    fclose(receiver_file);
+    fclose(temp_file);
+
+    remove(receiver_filename);
+    rename("database/temp_receiver.txt", receiver_filename);
+
+    // Display success message
+    printf("\n========================================\n");
+    printf("Transfer Successful!\n");
+    printf("----------------------------------------\n");
+    printf("Amount Transferred: RM %.2f\n", transfer_amount);
+    if (remittance_fee > 0) {
+        printf("Remittance Fee: RM %.2f\n", remittance_fee);
+        printf("Total Deducted: RM %.2f\n", total_deduction);
+    }
+    printf("----------------------------------------\n");
+    printf("Your New Balance: RM %.2f\n", sender_new_balance);
+    printf("Receiver's New Balance: RM %.2f\n", receiver_new_balance);
+    printf("========================================\n");
+
     return 0; // Success
 }
 
