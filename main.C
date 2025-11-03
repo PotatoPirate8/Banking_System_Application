@@ -7,6 +7,7 @@
 #include <time.h>
 #include <errno.h>
 #include <limits.h>
+#include <math.h>
 
 // Platform-specific includes for directory creation
 #ifdef _WIN32
@@ -18,6 +19,12 @@
 #endif
 
 // ==================== VALIDATION HELPER FUNCTIONS ====================
+
+// Helper function to round monetary values to 2 decimal places
+// This prevents floating-point precision errors that could lead to negative balances
+double round_money(double amount) {
+    return round(amount * 100.0) / 100.0;
+}
 
 // Helper function to validate name (only letters and spaces)
 int validate_name(const char *name) {
@@ -258,7 +265,6 @@ create_account:
 
     // Generate unique Bank Account Number using index file
     int bank_account_number;
-    char filename[100];
     
     // Read existing account numbers from index file
     int existing_accounts[1000000]; // Array to store existing account numbers
@@ -338,6 +344,9 @@ create_account:
     double initial_deposit = 0.00;
 
     // Save account details to a file in the database folder
+    char filename[100];
+    sprintf(filename, "database/%d.txt", bank_account_number);
+    
     FILE *fptr;
     fptr = fopen(filename, "w");
 
@@ -693,8 +702,8 @@ int Deposit_Money(void) {
         break; // Valid amount
     }
 
-    // Calculate new balance
-    double new_balance = current_balance + deposit_amount;
+    // Calculate new balance and round to prevent floating-point errors
+    double new_balance = round_money(current_balance + deposit_amount);
 
     // Confirm transaction
     char confirm[10];
@@ -897,8 +906,13 @@ int Withdraw_Money(void) {
         break; // Valid amount
     }
 
-    // Calculate new balance
-    double new_balance = current_balance - withdrawal_amount;
+    // Calculate new balance and round to prevent floating-point errors
+    double new_balance = round_money(current_balance - withdrawal_amount);
+    
+    // Ensure balance doesn't go negative due to floating-point errors
+    if (new_balance < 0.0) {
+        new_balance = 0.0;
+    }
 
     // Confirm transaction
     char confirm[10];
@@ -1171,15 +1185,15 @@ int Remittance(void) {
     
     if (strcasecmp(sender_type, "Savings") == 0 && strcasecmp(receiver_type, "Current") == 0) {
         fee_percentage = 2.0; // 2% fee for Savings to Current
-        remittance_fee = transfer_amount * 0.02;
+        remittance_fee = round_money(transfer_amount * 0.02);
     } else if (strcasecmp(sender_type, "Current") == 0 && strcasecmp(receiver_type, "Savings") == 0) {
         fee_percentage = 3.0; // 3% fee for Current to Savings
-        remittance_fee = transfer_amount * 0.03;
+        remittance_fee = round_money(transfer_amount * 0.03);
     }
     // No fee for same account type transfers
 
-    // Calculate total deduction from sender (transfer amount + fee)
-    double total_deduction = transfer_amount + remittance_fee;
+    // Calculate total deduction from sender (transfer amount + fee) and round
+    double total_deduction = round_money(transfer_amount + remittance_fee);
 
     // Check if sender has sufficient balance for transfer + fee
     if (total_deduction > sender_balance) {
@@ -1189,9 +1203,14 @@ int Remittance(void) {
         return -1;
     }
 
-    // Calculate new balances
-    double sender_new_balance = sender_balance - total_deduction;
-    double receiver_new_balance = receiver_balance + transfer_amount;
+    // Calculate new balances and round to prevent floating-point errors
+    double sender_new_balance = round_money(sender_balance - total_deduction);
+    double receiver_new_balance = round_money(receiver_balance + transfer_amount);
+    
+    // Ensure balances don't go negative due to floating-point errors
+    if (sender_new_balance < 0.0) {
+        sender_new_balance = 0.0;
+    }
 
     // Display transaction summary
     printf("\n========================================\n");
