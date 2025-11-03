@@ -256,27 +256,81 @@ create_account:
     // Create database directory if it doesn't exist (ignore error if already exists)
     mkdir("database");
 
-    // Generate unique Bank Account Number
+    // Generate unique Bank Account Number using index file
     int bank_account_number;
     char filename[100];
-    FILE *check_file;
-    int attempts = 0;
     
-    // Edge case: Ensure unique account number
-    do {
-        bank_account_number = rand() % (999999999 - 1000000 + 1) + 1000000; // 7 to 9 digits
-        sprintf(filename, "database/%d.txt", bank_account_number);
-        check_file = fopen(filename, "r");
-        
-        if (check_file != NULL) {
-            fclose(check_file);
-            attempts++;
-            if (attempts > 100) {
-                fprintf(stderr, "Error: Unable to generate unique account number after 100 attempts.\n");
-                return -1;
+    // Read existing account numbers from index file
+    int existing_accounts[1000000]; // Array to store existing account numbers
+    int account_count = 0;
+    
+    FILE *index_check = fopen("database/index.txt", "r");
+    if (index_check != NULL) {
+        char temp_line[512];
+        while (fgets(temp_line, sizeof(temp_line), index_check) && account_count < 1000000) {
+            int acc_num;
+            // Parse just the account number (first field before |)
+            if (sscanf(temp_line, "%d|", &acc_num) == 1) {
+                existing_accounts[account_count++] = acc_num;
             }
         }
-    } while (check_file != NULL);
+        fclose(index_check);
+    }
+    
+    // Calculate database capacity
+    int total_possible = 999999999 - 1000000 + 1; // Total possible account numbers
+    double usage_percentage = (account_count * 100.0) / total_possible;
+    
+    // Warn if account space is getting crowded (> 90% full)
+    if (usage_percentage > 90.0) {
+        printf("\nWARNING: Account number space is %.2f%% full.\n", usage_percentage);
+        printf("Account creation may take longer than usual.\n\n");
+    }
+    
+    // Display current database status
+    if (account_count > 0) {
+        printf("Current accounts in database: %d (%.4f%% capacity)\n", account_count, usage_percentage);
+    }
+    
+    // Generate unique account number by checking against existing accounts
+    int is_unique = 0;
+    int attempts = 0;
+    int max_attempts = 1000;
+    
+    do {
+        // Generate random account number
+        bank_account_number = rand() % (999999999 - 1000000 + 1) + 1000000;
+        
+        // Check if this number already exists in our list
+        is_unique = 1; // Assume unique until proven otherwise
+        for (int i = 0; i < account_count; i++) {
+            if (existing_accounts[i] == bank_account_number) {
+                is_unique = 0; // Found duplicate
+                break;
+            }
+        }
+        
+        attempts++;
+        
+        // Provide feedback on retry attempts
+        if (attempts % 100 == 0 && !is_unique) {
+            printf("Generating unique account number... (attempt %d/%d)\n", attempts, max_attempts);
+        }
+        
+        if (attempts >= max_attempts && !is_unique) {
+            fprintf(stderr, "\nError: Unable to generate unique account number after %d attempts.\n", max_attempts);
+            fprintf(stderr, "This may indicate that the account number space is nearly exhausted.\n");
+            fprintf(stderr, "Current database contains %d accounts (%.4f%% capacity).\n", 
+                    account_count, usage_percentage);
+            fprintf(stderr, "Please contact system administrator.\n");
+            return -1;
+        }
+    } while (!is_unique);
+    
+    // Display generation statistics if it took multiple attempts
+    if (attempts > 1) {
+        printf("Account number generated successfully after %d attempt(s).\n", attempts);
+    }
     
     printf("Your Bank Account Number is: %d\n", bank_account_number);
 
