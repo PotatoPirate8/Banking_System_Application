@@ -669,8 +669,200 @@ int Deposit_Money(void) {
 }
 
 int Withdraw_Money(void) {
-    // Placeholder implementation
-    printf("Withdrawing money from the account...\n");
+    // Get and validate account number
+    int account_number;
+    char account_input[100];
+    
+    printf("\n========================================\n");
+    printf("          Withdraw Money\n");
+    printf("========================================\n");
+    
+    while (1) {
+        printf("Enter your account number: ");
+        fgets(account_input, sizeof(account_input), stdin);
+        account_input[strcspn(account_input, "\n")] = 0;
+
+        // Validate numeric input
+        char *endptr;
+        long temp = strtol(account_input, &endptr, 10);
+        
+        if (*endptr != '\0' || account_input[0] == '\0') {
+            printf("Error: Account number must contain only digits.\n");
+            continue;
+        }
+
+        if (temp < 1000000 || temp > 999999999) {
+            printf("Error: Invalid account number format.\n");
+            continue;
+        }
+
+        account_number = (int)temp;
+        break; // Valid account number
+    }
+
+    // Check if account exists
+    char filename[100];
+    sprintf(filename, "database/%d.txt", account_number);
+    FILE *account_file = fopen(filename, "r");
+    if (account_file == NULL) {
+        printf("Error: Account not found.\n");
+        return -1;
+    }
+
+    // Read account details
+    char line[512];
+    char stored_pin[100] = "";
+    char name[100] = "";
+    char account_type[20] = "";
+    double current_balance = 0.00;
+
+    while (fgets(line, sizeof(line), account_file)) {
+        if (strncmp(line, "PIN: ", 5) == 0) {
+            sscanf(line, "PIN: %s", stored_pin);
+        } else if (strncmp(line, "Name: ", 6) == 0) {
+            sscanf(line, "Name: %99[^\n]", name);
+        } else if (strncmp(line, "Account Type: ", 14) == 0) {
+            sscanf(line, "Account Type: %s", account_type);
+        } else if (strncmp(line, "Initial Deposit: ", 17) == 0) {
+            sscanf(line, "Initial Deposit: %lf", &current_balance);
+        } else if (strncmp(line, "Current Balance: ", 17) == 0) {
+            sscanf(line, "Current Balance: %lf", &current_balance);
+        }
+    }
+    fclose(account_file);
+
+    // Authenticate with PIN
+    char pin_input[100];
+    
+    while (1) {
+        printf("Enter your 4-digit PIN: ");
+        fgets(pin_input, sizeof(pin_input), stdin);
+        pin_input[strcspn(pin_input, "\n")] = 0;
+
+        // Validate PIN format
+        if (!validate_pin(pin_input)) {
+            printf("Error: PIN must be exactly 4 digits.\n");
+            continue;
+        }
+
+        break; // Valid format
+    }
+
+    if (strcmp(pin_input, stored_pin) != 0) {
+        printf("PIN verification failed. Access denied.\n");
+        return -1;
+    }
+
+    // Display account info with available balance
+    printf("\n========================================\n");
+    printf("Account Number: %d\n", account_number);
+    printf("Name: %s\n", name);
+    printf("Account Type: %s\n", account_type);
+    printf("Available Balance: RM %.2f\n", current_balance);
+    printf("========================================\n");
+
+    // Check if account has sufficient balance
+    if (current_balance <= 0) {
+        printf("\nInsufficient balance. Cannot process withdrawal.\n");
+        return -1;
+    }
+
+    // Get withdrawal amount
+    double withdrawal_amount;
+    char amount_str[100];
+    
+    while (1) {
+        printf("\nEnter amount to withdraw: RM ");
+        fgets(amount_str, sizeof(amount_str), stdin);
+        amount_str[strcspn(amount_str, "\n")] = 0;
+
+        // Convert to double
+        char *endptr;
+        withdrawal_amount = strtod(amount_str, &endptr);
+
+        // Validate input
+        if (*endptr != '\0' || amount_str[0] == '\0') {
+            printf("Invalid amount. Please enter a valid number.\n");
+            continue;
+        }
+
+        if (withdrawal_amount <= 0) {
+            printf("Amount must be greater than RM0.00\n");
+            continue;
+        }
+
+        if (withdrawal_amount > current_balance) {
+            printf("Insufficient funds. Available balance: RM %.2f\n", current_balance);
+            continue;
+        }
+
+        break; // Valid amount
+    }
+
+    // Calculate new balance
+    double new_balance = current_balance - withdrawal_amount;
+
+    // Confirm transaction
+    char confirm[10];
+    printf("\n========================================\n");
+    printf("Transaction Summary:\n");
+    printf("Withdrawal Amount: RM %.2f\n", withdrawal_amount);
+    printf("Current Balance: RM %.2f\n", current_balance);
+    printf("New Balance: RM %.2f\n", new_balance);
+    printf("========================================\n");
+    printf("Confirm withdrawal? (yes/no): ");
+    fgets(confirm, sizeof(confirm), stdin);
+    confirm[strcspn(confirm, "\n")] = 0;
+
+    if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
+        printf("Withdrawal cancelled.\n");
+        return 0;
+    }
+
+    // Update account file with new balance
+    account_file = fopen(filename, "r");
+    if (account_file == NULL) {
+        printf("Error: Could not open account file.\n");
+        return -1;
+    }
+
+    // Read all content and update balance
+    FILE *temp_file = fopen("database/temp_account.txt", "w");
+    if (temp_file == NULL) {
+        fclose(account_file);
+        printf("Error: Could not create temporary file.\n");
+        return -1;
+    }
+
+    int balance_updated = 0;
+    while (fgets(line, sizeof(line), account_file)) {
+        if (strncmp(line, "Initial Deposit: ", 17) == 0 || 
+            strncmp(line, "Current Balance: ", 17) == 0) {
+            fprintf(temp_file, "Current Balance: %.2f\n", new_balance);
+            balance_updated = 1;
+        } else {
+            fputs(line, temp_file);
+        }
+    }
+
+    // If no balance line existed, add it
+    if (!balance_updated) {
+        fprintf(temp_file, "Current Balance: %.2f\n", new_balance);
+    }
+
+    fclose(account_file);
+    fclose(temp_file);
+
+    // Replace old file with updated file
+    remove(filename);
+    rename("database/temp_account.txt", filename);
+
+    printf("\n========================================\n");
+    printf("Withdrawal Successful!\n");
+    printf("Amount Withdrawn: RM %.2f\n", withdrawal_amount);
+    printf("New Balance: RM %.2f\n", new_balance);
+    printf("========================================\n");
+
     return 0; // Success
 }
 
