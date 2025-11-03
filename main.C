@@ -1170,10 +1170,36 @@ int Remittance(void) {
         return 0;
     }
 
-    // Update sender's account file
+    // ==================== TRANSACTION LOGGING & ATOMIC OPERATIONS ====================
+    
+    // Generate unique transaction ID based on timestamp
+    time_t now = time(NULL);
+    char transaction_log[200];
+    sprintf(transaction_log, "database/transaction_%ld.log", (long)now);
+    
+    // Step 1: Create transaction log file BEFORE any changes
+    FILE *log_file = fopen(transaction_log, "w");
+    if (log_file == NULL) {
+        printf("Error: Could not create transaction log. Transaction aborted.\n");
+        return -1;
+    }
+    
+    // Log transaction details for potential rollback
+    fprintf(log_file, "TRANSACTION_START\n");
+    fprintf(log_file, "Sender_Account: %d\n", sender_account);
+    fprintf(log_file, "Sender_Original_Balance: %.2f\n", sender_balance);
+    fprintf(log_file, "Receiver_Account: %d\n", receiver_account);
+    fprintf(log_file, "Receiver_Original_Balance: %.2f\n", receiver_balance);
+    fprintf(log_file, "Transfer_Amount: %.2f\n", transfer_amount);
+    fprintf(log_file, "Remittance_Fee: %.2f\n", remittance_fee);
+    fprintf(log_file, "Status: PENDING\n");
+    fclose(log_file);
+
+    // Step 2: Update sender's account file
     sender_file = fopen(sender_filename, "r");
     if (sender_file == NULL) {
         printf("Error: Could not open sender's account file.\n");
+        remove(transaction_log); // Clean up transaction log
         return -1;
     }
 
@@ -1181,6 +1207,7 @@ int Remittance(void) {
     if (temp_file == NULL) {
         fclose(sender_file);
         printf("Error: Could not create temporary file.\n");
+        remove(transaction_log); // Clean up transaction log
         return -1;
     }
 
@@ -1202,20 +1229,102 @@ int Remittance(void) {
     fclose(sender_file);
     fclose(temp_file);
 
-    remove(sender_filename);
-    rename("database/temp_sender.txt", sender_filename);
+    // Atomically replace sender's file
+    if (remove(sender_filename) != 0 || rename("database/temp_sender.txt", sender_filename) != 0) {
+        printf("Error: Could not update sender's account file.\n");
+        remove(transaction_log); // Clean up transaction log
+        return -1;
+    }
 
-    // Update receiver's account file
+    // Update transaction log - sender updated
+    log_file = fopen(transaction_log, "a");
+    if (log_file != NULL) {
+        fprintf(log_file, "Sender_Updated: YES\n");
+        fclose(log_file);
+    }
+
+    // Step 3: Update receiver's account file
     receiver_file = fopen(receiver_filename, "r");
     if (receiver_file == NULL) {
-        printf("Error: Could not open receiver's account file.\n");
+        // CRITICAL: Sender already debited, need to rollback!
+        printf("Error: Could not open receiver's account file. Initiating rollback...\n");
+        
+        // Rollback: Restore sender's balance
+        sender_file = fopen(sender_filename, "r");
+        temp_file = fopen("database/temp_sender.txt", "w");
+        
+        if (sender_file != NULL && temp_file != NULL) {
+            while (fgets(line, sizeof(line), sender_file)) {
+                if (strncmp(line, "Current Balance: ", 17) == 0) {
+                    fprintf(temp_file, "Current Balance: %.2f\n", sender_balance); // Restore original
+                } else {
+                    fputs(line, temp_file);
+                }
+            }
+            fclose(sender_file);
+            fclose(temp_file);
+            remove(sender_filename);
+            rename("database/temp_sender.txt", sender_filename);
+            
+            // Update log
+            log_file = fopen(transaction_log, "a");
+            if (log_file != NULL) {
+                fprintf(log_file, "Status: ROLLED_BACK\n");
+                fprintf(log_file, "Reason: Receiver file access failed\n");
+                fclose(log_file);
+            }
+            
+            printf("Rollback successful. Your balance has been restored to RM %.2f\n", sender_balance);
+        } else {
+            printf("CRITICAL ERROR: Rollback failed! Please contact support immediately.\n");
+            printf("Transaction ID: %ld\n", (long)now);
+            
+            log_file = fopen(transaction_log, "a");
+            if (log_file != NULL) {
+                fprintf(log_file, "Status: ROLLBACK_FAILED\n");
+                fprintf(log_file, "Reason: Could not restore sender balance\n");
+                fclose(log_file);
+            }
+        }
         return -1;
     }
 
     temp_file = fopen("database/temp_receiver.txt", "w");
     if (temp_file == NULL) {
         fclose(receiver_file);
-        printf("Error: Could not create temporary file.\n");
+        
+        // CRITICAL: Rollback needed
+        printf("Error: Could not create receiver's temporary file. Initiating rollback...\n");
+        
+        // Rollback sender's balance
+        sender_file = fopen(sender_filename, "r");
+        FILE *temp_sender = fopen("database/temp_sender.txt", "w");
+        
+        if (sender_file != NULL && temp_sender != NULL) {
+            while (fgets(line, sizeof(line), sender_file)) {
+                if (strncmp(line, "Current Balance: ", 17) == 0) {
+                    fprintf(temp_sender, "Current Balance: %.2f\n", sender_balance);
+                } else {
+                    fputs(line, temp_sender);
+                }
+            }
+            fclose(sender_file);
+            fclose(temp_sender);
+            remove(sender_filename);
+            rename("database/temp_sender.txt", sender_filename);
+            
+            log_file = fopen(transaction_log, "a");
+            if (log_file != NULL) {
+                fprintf(log_file, "Status: ROLLED_BACK\n");
+                fprintf(log_file, "Reason: Receiver temp file creation failed\n");
+                fclose(log_file);
+            }
+            
+            printf("Rollback successful. Your balance has been restored to RM %.2f\n", sender_balance);
+        } else {
+            printf("CRITICAL ERROR: Rollback failed! Please contact support.\n");
+            printf("Transaction ID: %ld\n", (long)now);
+        }
         return -1;
     }
 
@@ -1237,12 +1346,52 @@ int Remittance(void) {
     fclose(receiver_file);
     fclose(temp_file);
 
-    remove(receiver_filename);
-    rename("database/temp_receiver.txt", receiver_filename);
+    // Atomically replace receiver's file
+    if (remove(receiver_filename) != 0 || rename("database/temp_receiver.txt", receiver_filename) != 0) {
+        printf("Error: Could not update receiver's account file. Initiating rollback...\n");
+        
+        // Rollback sender's balance
+        sender_file = fopen(sender_filename, "r");
+        temp_file = fopen("database/temp_sender.txt", "w");
+        
+        if (sender_file != NULL && temp_file != NULL) {
+            while (fgets(line, sizeof(line), sender_file)) {
+                if (strncmp(line, "Current Balance: ", 17) == 0) {
+                    fprintf(temp_file, "Current Balance: %.2f\n", sender_balance);
+                } else {
+                    fputs(line, temp_file);
+                }
+            }
+            fclose(sender_file);
+            fclose(temp_file);
+            remove(sender_filename);
+            rename("database/temp_sender.txt", sender_filename);
+            
+            log_file = fopen(transaction_log, "a");
+            if (log_file != NULL) {
+                fprintf(log_file, "Status: ROLLED_BACK\n");
+                fprintf(log_file, "Reason: Receiver file update failed\n");
+                fclose(log_file);
+            }
+            
+            printf("Rollback successful. Your balance has been restored to RM %.2f\n", sender_balance);
+        }
+        return -1;
+    }
+
+    // Step 4: Mark transaction as successful
+    log_file = fopen(transaction_log, "a");
+    if (log_file != NULL) {
+        fprintf(log_file, "Receiver_Updated: YES\n");
+        fprintf(log_file, "Status: COMPLETED\n");
+        fprintf(log_file, "Timestamp: %ld\n", (long)now);
+        fclose(log_file);
+    }
 
     // Display success message
     printf("\n========================================\n");
     printf("Transfer Successful!\n");
+    printf("Transaction ID: %ld\n", (long)now);
     printf("----------------------------------------\n");
     printf("Amount Transferred: RM %.2f\n", transfer_amount);
     if (remittance_fee > 0) {
