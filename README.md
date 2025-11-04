@@ -59,7 +59,7 @@ A robust C-based banking system with comprehensive error handling, data validati
 
 ### Windows (MinGW)
 ```bash
-gcc -o banking_system.exe main.C -lm
+gcc main.C -o main.exe -lm
 ```
 
 ### Linux/Unix
@@ -73,7 +73,7 @@ Run the compiled executable:
 
 ### Windows
 ```bash
-./banking_system.exe
+./main.exe
 ```
 
 ### Linux/Unix
@@ -140,6 +140,14 @@ If an account file is corrupted or missing required fields:
 - Original index preserved if update fails
 - Cleanup of temporary files on errors
 
+## Troubleshooting
+
+### Program exits when selecting "1. Create New Bank Account"
+- Symptom: The application appears to exit or crash immediately after entering option 1 in the main menu.
+- Cause: This was due to a large array being allocated on the stack during account number uniqueness checks, which could overflow the default Windows stack.
+- Status: Fixed on 2025-11-04 by replacing the stack array with a dynamically resized heap allocation. If you previously observed this behavior, rebuild with the latest source.
+- Verify: From the main menu, enter `1` and complete the prompts. The account should be created successfully and the menu should display again.
+
 ## Known Limitations
 
 1. **Maximum Accounts**: 1,000 accounts can be displayed in delete operation
@@ -179,6 +187,10 @@ Remittance operations use a multi-step process with logging:
 - Transaction rollback capability
 - Overflow protection
 - Cross-platform support (Windows/Linux)
+
+## Changelog
+
+- 2025-11-04: Fixed premature exit on selecting option 1 (Create New Bank Account). Replaced large stack allocation with dynamic memory in account number uniqueness check to prevent stack overflow, especially on Windows/MinGW.
 
 ## License
 
