@@ -1,0 +1,6 @@
+Name: Alice Example
+ID: 12345678
+Account Type: Savings
+PIN: 1234
+Account Number: 1022630
+Initial Deposit: 0.00

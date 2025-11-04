@@ -1,2 +1,4 @@
 1022547|Wong Jun Han|080808103591|Savings
 1008839|no|1010|Current
+1022630|Alice Example|12345678|Savings
+1022689|Alice Example|12345678|Savings

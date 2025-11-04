@@ -13,6 +13,7 @@
 #ifdef _WIN32
     #include <direct.h>  // For _mkdir on Windows   
     #define mkdir(dir) _mkdir(dir)
+    #define strcasecmp _stricmp  // Windows uses _stricmp instead of strcasecmp
 #else
     #include <sys/stat.h>
     #include <sys/types.h>
@@ -20,8 +21,7 @@
 
 // ==================== VALIDATION HELPER FUNCTIONS ====================
 
-// Helper function to round monetary values to 2 decimal places
-// This prevents floating-point precision errors that could lead to negative balances
+// Helper function to round monetary values to 2 decimal places to prevent floating-point precision errors
 double round_money(double amount) {
     return round(amount * 100.0) / 100.0;
 }
@@ -56,7 +56,7 @@ int validate_id(const char *id) {
 int validate_account_type(const char *type) {
     // Case-insensitive comparison
     if (strcasecmp(type, "Savings") == 0 || strcasecmp(type, "Current") == 0) {
-        return 1; // Valid
+        return 1; // 
     }
     return 0; // Invalid
 }
@@ -421,18 +421,31 @@ create_account:
 
     // Generate unique Bank Account Number using index file
     int bank_account_number;
-    
-    // Read existing account numbers from index file
-    int existing_accounts[1000000]; // Array to store existing account numbers
+
+    // Read existing account numbers from index file (use heap to avoid stack overflow)
+    int *existing_accounts = NULL;      // dynamic array to store existing account numbers
+    int account_capacity = 0;
     int account_count = 0;
-    
+
     FILE *index_check = fopen("database/index.txt", "r");
     if (index_check != NULL) {
         char temp_line[512];
-        while (fgets(temp_line, sizeof(temp_line), index_check) && account_count < 1000000) {
+        while (fgets(temp_line, sizeof(temp_line), index_check)) {
             int acc_num;
             // Parse just the account number (first field before |)
             if (sscanf(temp_line, "%d|", &acc_num) == 1) {
+                // grow array if needed
+                if (account_count == account_capacity) {
+                    int new_capacity = (account_capacity == 0) ? 1024 : account_capacity * 2;
+                    int *new_buf = (int *)realloc(existing_accounts, new_capacity * sizeof(int));
+                    if (new_buf == NULL) {
+                        // Allocation failed; stop collecting further to avoid crash
+                        fprintf(stderr, "Warning: Memory allocation failed while reading index; uniqueness checks may be slower.\n");
+                        break;
+                    }
+                    existing_accounts = new_buf;
+                    account_capacity = new_capacity;
+                }
                 existing_accounts[account_count++] = acc_num;
             }
         }
@@ -462,11 +475,11 @@ create_account:
     do {
         // Generate random account number
         bank_account_number = rand() % (999999999 - 1000000 + 1) + 1000000;
-        
+
         // Check if this number already exists in our list
         is_unique = 1; // Assume unique until proven otherwise
         for (int i = 0; i < account_count; i++) {
-            if (existing_accounts[i] == bank_account_number) {
+            if (existing_accounts && existing_accounts[i] == bank_account_number) {
                 is_unique = 0; // Found duplicate
                 break;
             }
@@ -485,9 +498,13 @@ create_account:
             fprintf(stderr, "Current database contains %d accounts (%.4f%% capacity).\n", 
                     account_count, usage_percentage);
             fprintf(stderr, "Please contact system administrator.\n");
+            free(existing_accounts);
             return -1;
         }
     } while (!is_unique);
+
+    // No longer need the list of existing accounts
+    free(existing_accounts);
     
     // Display generation statistics if it took multiple attempts
     if (attempts > 1) {
@@ -1087,9 +1104,14 @@ int Withdraw_Money(void) {
     // Calculate new balance and round to prevent floating-point errors
     double new_balance = round_money(account.balance - withdrawal_amount);
     
-    // Ensure balance doesn't go negative due to floating-point errors
+    // Safety check: balance should never go negative after validation
+    // If it does, it indicates a serious calculation error
     if (new_balance < 0.0) {
-        new_balance = 0.0;
+        fprintf(stderr, "CRITICAL ERROR: Balance calculation resulted in negative value!\n");
+        fprintf(stderr, "Current: %.2f, Withdrawal: %.2f, Result: %.2f\n", 
+                account.balance, withdrawal_amount, new_balance);
+        fprintf(stderr, "This should not happen. Transaction aborted.\n");
+        return -1;
     }
 
     // Confirm transaction
@@ -1363,9 +1385,14 @@ int Remittance(void) {
     double sender_new_balance = round_money(sender_account_data.balance - total_deduction);
     double receiver_new_balance = round_money(receiver_account_data.balance + transfer_amount);
     
-    // Ensure balances don't go negative due to floating-point errors
+    // Safety check: sender balance should never go negative after validation
+    // If it does, it indicates a serious calculation error
     if (sender_new_balance < 0.0) {
-        sender_new_balance = 0.0;
+        fprintf(stderr, "CRITICAL ERROR: Sender balance calculation resulted in negative value!\n");
+        fprintf(stderr, "Current: %.2f, Deduction: %.2f, Result: %.2f\n", 
+                sender_account_data.balance, total_deduction, sender_new_balance);
+        fprintf(stderr, "This should not happen. Transaction aborted.\n");
+        return -1;
     }
 
     // Display transaction summary
@@ -1676,6 +1703,7 @@ int main(void) {
         printf("5. Remittance\n");
         printf("6. Exit\n");
         printf("Enter your choice: ");
+
         if (scanf("%d", &choice) != 1) {
             fprintf(stderr, "Invalid input. Please enter a number.\n");
             while (getchar() != '\n'); // Clear invalid input
@@ -1703,7 +1731,7 @@ int main(void) {
                 printf("Exiting the program.\n");
                 return 0;
             default:
-                printf("Invalid choice. Please try again.\n");
+                printf("Invalid choice. Please enter a number between 1 and 6.\n");
         }
     }
     return 0;
