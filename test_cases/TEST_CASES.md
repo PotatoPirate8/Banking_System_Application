@@ -1,4 +1,4 @@
-# Top 10 Most Important Test Cases for Banking System Application
+# Test Cases for Banking System Application
 
 ## Test Environment
 - **Platform:** Windows
@@ -9,7 +9,7 @@
 
 ## Critical Test Cases
 
-### 1. TC-AC-001: Create Account with Valid Inputs (CRITICAL)
+### 1. TC-1: Create Account with Valid Inputs 
 **Category:** Account Creation  
 **Priority:** HIGH  
 **Description:** Verify that a valid account can be created successfully
@@ -35,7 +35,7 @@
 
 ---
 
-### 2. TC-AC-205: ID Length Validation (CRITICAL)
+### 2. TC-2: ID Length Validation 
 **Category:** Account Creation - Input Validation  
 **Priority:** HIGH  
 **Description:** Verify that ID must be between 7 and 12 digits
@@ -58,7 +58,7 @@
 
 ---
 
-### 3. TC-DP-001: Deposit Money Successfully (CRITICAL)
+### 3. TC-3: Deposit Money Successfully 
 **Category:** Deposit  
 **Priority:** HIGH  
 **Description:** Verify that money can be deposited into an existing account
@@ -82,7 +82,7 @@
 
 ---
 
-### 4. TC-WD-101: Withdraw More Than Balance (CRITICAL)
+### 4. TC-4: Withdraw More Than Balance 
 **Category:** Withdrawal - Insufficient Funds  
 **Priority:** HIGH  
 **Description:** Verify that withdrawal fails when amount exceeds balance
@@ -104,7 +104,7 @@
 
 ---
 
-### 5. TC-RM-102: Transfer with Fee (Current to Savings) (CRITICAL)
+### 5. TC-5: Transfer with Fee (Current to Savings) 
 **Category:** Remittance  
 **Priority:** HIGH  
 **Description:** Verify that 3% fee is applied when transferring from Current to Savings account
@@ -131,7 +131,7 @@
 
 ---
 
-### 6. TC-RM-203: Transfer to Same Account (CRITICAL)
+### 6. TC-6: Transfer to Same Account 
 **Category:** Remittance - Validation  
 **Priority:** HIGH  
 **Description:** Verify that system prevents transferring to the same account
@@ -154,7 +154,7 @@
 
 ---
 
-### 7. TC-AD-001: Delete Account Successfully (CRITICAL)
+### 7. TC-7: Delete Account Successfully 
 **Category:** Account Deletion  
 **Priority:** HIGH  
 **Description:** Verify that an existing account can be deleted with proper verification
@@ -181,7 +181,7 @@
 
 ---
 
-### 8. TC-FS-301: Transfer Rollback on Error (CRITICAL)
+### 8. TC-8: Transfer Rollback on Error 
 **Category:** Transaction Atomicity  
 **Priority:** HIGH  
 **Description:** Verify that failed transfer transactions rollback properly
@@ -203,7 +203,7 @@
 
 ---
 
-### 9. TC-SEC-001: Buffer Overflow Prevention (CRITICAL)
+### 9. TC-9: Buffer Overflow Prevention 
 **Category:** Security  
 **Priority:** HIGH  
 **Description:** Verify that system handles extremely long inputs safely
@@ -228,7 +228,7 @@
 
 ---
 
-### 10. TC-INT-001: Complete Lifecycle Test (CRITICAL)
+### 10. TC-10: Complete Lifecycle Test 
 **Category:** Integration  
 **Priority:** HIGH  
 **Description:** Verify that all major operations work together in sequence

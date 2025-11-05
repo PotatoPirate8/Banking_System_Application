@@ -1,102 +1,208 @@
-# Banking System Application
+<div align="center">
 
-A robust C-based banking system with comprehensive error handling, data validation, and transaction management features.
+# 🏦 Banking System Application
 
-## Features
+[![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![GCC](https://img.shields.io/badge/GCC-Compiler-blue?style=for-the-badge)](https://gcc.gnu.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)](README.md)
+[![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)](README.md)
 
-### Core Banking Operations
-- **Create Bank Account** - Register new accounts with validated user information
-- **Delete Bank Account** - Securely remove accounts with PIN and ID verification
-- **Deposit Money** - Add funds to accounts with transaction limits
-- **Withdraw Money** - Withdraw funds with balance verification
-- **Money Transfer (Remittance)** - Transfer funds between accounts with fee calculation
+**A robust C-based banking system with comprehensive error handling, data validation, and transaction management**
 
-### Security Features
-- 4-digit PIN authentication for all transactions
-- ID verification for account deletion
-- Account type validation (Savings/Current)
-- Input sanitization and validation
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Testing](#-testing)
 
-### Data Integrity
-- **Floating-point error protection** - All monetary calculations are rounded to 2 decimal places
-- **Account file corruption detection** - Validates all required fields when reading account data
-- **Atomic file operations** - Uses temporary files and atomic rename for crash safety
-- **Transaction logging** - Maintains transaction logs for remittance operations with rollback capability
-- **Index file integrity** - Atomic updates to prevent corruption during account creation/deletion
+</div>
 
-### Transaction Safety
-- Overflow protection for extremely large monetary values (max: RM999,999,999.99)
-- Automatic rollback on failed remittance transactions
-- Balance validation before all withdrawal operations
-- Comprehensive error reporting
+---
 
-## Technical Specifications
+## 📋 Table of Contents
 
-### Supported Platforms
-- **Windows** (MinGW GCC, MSVC)
-- **Linux/Unix** (GCC)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Technical Specifications](#-technical-specifications)
+- [File Structure](#-file-structure)
+- [Data Validation](#-data-validation)
+- [Error Handling](#-error-handling)
+- [Testing](#-testing)
+- [Troubleshooting](#-troubleshooting)
+- [Development](#-development)
+- [License](#-license)
 
-### Requirements
+## 🔍 Overview
+
+A comprehensive banking system application built in C, featuring secure account management, transaction processing, and robust error handling. Designed for educational purposes as part of COMP1312 coursework at the University of Southampton Malaysia.
+
+### 🎯 Key Highlights
+
+- ✅ **100% C Implementation** - Pure C with standard libraries
+- ✅ **Cross-Platform** - Works on Windows and Linux
+- ✅ **Transaction Safety** - Atomic operations with rollback
+- ✅ **Data Integrity** - Comprehensive validation and error checking
+- ✅ **Automated Testing** - 10 critical test cases included
+- ✅ **Well Documented** - Extensive inline and external documentation
+
+## ✨ Features
+
+### 🏛️ Core Banking Operations
+
+| Feature | Description |
+|---------|-------------|
+| 🆕 **Create Bank Account** | Register new accounts with validated user information |
+| 🗑️ **Delete Bank Account** | Securely remove accounts with PIN and ID verification |
+| 💰 **Deposit Money** | Add funds to accounts with transaction limits |
+| 💸 **Withdraw Money** | Withdraw funds with balance verification |
+| 🔄 **Money Transfer** | Transfer funds between accounts with fee calculation |
+
+### 🔒 Security Features
+
+- 🔐 4-digit PIN authentication for all transactions
+- 🆔 ID verification (7-12 digits) for account deletion
+- ✅ Account type validation (Savings/Current)
+- 🛡️ Input sanitization and validation
+- 🚫 Buffer overflow prevention
+
+### 🛠️ Data Integrity
+
+| Feature | Description |
+|---------|-------------|
+| 💵 **Floating-point protection** | All monetary calculations rounded to 2 decimal places |
+| 🔍 **Corruption detection** | Validates all required fields when reading account data |
+| ⚛️ **Atomic file operations** | Uses temporary files and atomic rename for crash safety |
+| 📝 **Transaction logging** | Maintains logs for remittance operations with rollback |
+| 📊 **Index file integrity** | Atomic updates prevent corruption during operations |
+
+### 🔄 Transaction Safety
+
+- 🛡️ Overflow protection for large values (max: RM999,999,999.99)
+- ↩️ Automatic rollback on failed remittance transactions
+- ✔️ Balance validation before all withdrawal operations
+- 📢 Comprehensive error reporting
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
 - C Compiler (GCC 7.0+ or compatible)
 - Standard C libraries
+- Windows (MinGW) or Linux/Unix system
 
-### Account Number Range
-- Minimum: 1,000,000
-- Maximum: 999,999,999
-- Total capacity: 998,999,999 accounts
+### Compilation
 
-### Transaction Limits
-- **Deposit**: RM0.01 - RM50,000.00 per transaction
-- **Withdrawal**: Limited by account balance
-- **Transfer**: Limited by account balance + fees
+<details open>
+<summary><b>Windows (MinGW)</b></summary>
 
-### Remittance Fees
-- **Savings → Current**: 2% of transfer amount
-- **Current → Savings**: 3% of transfer amount
-- **Same account type**: No fee
-
-## Compilation
-
-### Windows (MinGW)
 ```bash
 gcc main.C -o main.exe -lm
 ```
+</details>
 
-### Linux/Unix
+<details>
+<summary><b>Linux/Unix</b></summary>
+
 ```bash
 gcc -o banking_system main.C -lm
 ```
+</details>
 
-## Usage
+### Running the Application
 
-Run the compiled executable:
-
-### Windows
+**Windows:**
 ```bash
 ./main.exe
 ```
 
-### Linux/Unix
+**Linux/Unix:**
 ```bash
 ./banking_system
 ```
 
-## File Structure
+### First Time Setup
+
+On first run, the application will automatically:
+1. Create a `database/` directory
+2. Initialize the `index.txt` file
+3. Display the main menu
+
+---
+
+## 📊 Technical Specifications
+
+### 🖥️ Platform Support
+
+| Platform | Compiler | Status |
+|----------|----------|--------|
+| Windows | MinGW GCC, MSVC | ✅ Supported |
+| Linux/Unix | GCC | ✅ Supported |
+| macOS | GCC, Clang | ✅ Supported |
+
+### 📝 System Requirements
+
+- **Compiler:** GCC 7.0+ or compatible
+- **Libraries:** Standard C libraries (`stdio.h`, `stdlib.h`, `string.h`, `math.h`, etc.)
+- **Memory:** Minimal (< 10 MB)
+- **Disk Space:** Depends on number of accounts
+
+### 🔢 Account Specifications
+
+| Parameter | Value |
+|-----------|-------|
+| **Account Number Range** | 1,000,000 - 999,999,999 |
+| **Total Capacity** | 998,999,999 accounts |
+| **ID Length** | 7-12 digits  |
+| **PIN Length** | Exactly 4 digits |
+| **Account Types** | Savings, Current |
+
+### 💰 Transaction Limits
+
+| Operation | Limit |
+|-----------|-------|
+| **Deposit** | RM 0.01 - RM 50,000.00 per transaction |
+| **Withdrawal** | Limited by account balance |
+| **Transfer** | Limited by account balance + fees |
+| **Maximum Balance** | RM 999,999,999.99 |
+
+### 💳 Remittance Fee Structure
+
+| From | To | Fee |
+|------|-----|-----|
+| Savings | Current | 2% |
+| Current | Savings | 3% |
+| Savings | Savings | 0% (Free) |
+| Current | Current | 0% (Free) |
+
+---
+
+## 📁 File Structure
 
 ```
 Banking_System_Application/
-├── main.C                  # Main source code
-├── README.md               # This file
-└── database/               # Auto-created database directory
-    ├── index.txt          # Account index (AccountNumber|Name|ID|Type)
-    ├── [account_num].txt  # Individual account files
-    └── transaction_*.log  # Transaction logs
+│
+├── 📄 main.C                    # Main application source code
+├── 📖 README.md                 # Project documentation (this file)
+├── 📖 USER_MANUAL.md            # User guide and instructions
+│
+├── 📂 database/                 # Auto-created database directory
+│   ├── 📊 index.txt            # Account index (AccountNumber|Name|ID|Type)
+│   ├── 📄 [account_num].txt    # Individual account files
+│   └── 📝 transaction_*.log    # Transaction logs
+│
+└── 📂 test_cases/              # Test suite directory
+    ├── 🧪 test_suite.c         # Automated test suite
+    ├── 📖 README.md            # Testing documentation
+    ├── 📋 TEST_CASES.md        # Comprehensive test cases
+    ├── 📋 TOP_10_TEST_CASES.md # Critical test cases
+    ├── 🔧 run_tests.sh         # Linux/Mac test runner
+    └── 🔧 run_tests.bat        # Windows test runner
 ```
 
-## Account File Format
+### 📄 Account File Format
 
 Each account is stored as a text file with the following structure:
-```
+
+```txt
 Name: [User Name]
 ID: [Identification Number]
 Account Type: [Savings|Current]
@@ -105,97 +211,382 @@ Account Number: [7-9 digit number]
 Current Balance: [amount]
 ```
 
-## Data Validation
+**Example:**
+```txt
+Name: John Smith
+ID: 1234567
+Account Type: Savings
+PIN: 1234
+Account Number: 1234567
+Current Balance: 1000.00
+```
 
-### Input Validation
-- **Name**: Letters and spaces only
-- **ID**: Digits only
-- **PIN**: Exactly 4 digits
-- **Account Type**: "Savings" or "Current" (case-insensitive)
-- **Monetary amounts**: Max 2 decimal places, positive values only
+---
 
-### File Validation
+## ✅ Data Validation
+
+### 📝 Input Validation Rules
+
+| Field | Rules | Format |
+|-------|-------|--------|
+| **Name** | Letters and spaces only | `John Smith` |
+| **ID** | 7-12 digits  | `1234567` - `123456789012` |
+| **PIN** | Exactly 4 digits | `1234` |
+| **Account Type** | Savings or Current (case-insensitive) | `Savings` / `savings` |
+| **Monetary Amounts** | Max 2 decimal places, positive values | `1234.56` |
+
+### 🔍 File Validation
+
 When reading account files, the system validates:
-- All required fields are present
-- Balance is within acceptable range (0 to RM999,999,999.99)
-- PIN format is valid
-- Account type is valid
-- No NaN or Infinity values
 
-## Error Handling
+- ✅ All required fields are present
+- ✅ Balance is within acceptable range (RM 0 - RM 999,999,999.99)
+- ✅ PIN format is valid (4 digits)
+- ✅ Account type is valid (Savings/Current)
+- ✅ No NaN or Infinity values
+- ✅ File structure integrity
 
-### Account File Corruption
+---
+
+## 🛡️ Error Handling
+
+### 🔴 Account File Corruption
+
 If an account file is corrupted or missing required fields:
-- Transaction is blocked
-- Detailed error message is displayed
-- User is advised to contact support
 
-### Transaction Failures
-- **Deposit/Withdrawal**: File operations are validated before confirming success
-- **Remittance**: Automatic rollback if receiver update fails
-- All errors are logged with descriptive messages
+- ❌ Transaction is blocked
+- 📢 Detailed error message is displayed
+- 💡 User is advised to contact support
 
-### Index File Protection
-- Atomic writes using temporary files
-- Original index preserved if update fails
-- Cleanup of temporary files on errors
+**Example Error:**
+```
+ERROR: Account file corrupted. Please contact support.
+```
 
-## Troubleshooting Experience
+### 🔄 Transaction Failures
 
-### Program exits when selecting "1. Create New Bank Account"
-- Symptom: The application appears to exit or crash immediately after entering option 1 in the main menu.
-- Cause: This was due to a large array being allocated on the stack during account number uniqueness checks, which could overflow the default Windows stack.
-- Status: Fixed on 2025-11-04 by replacing the stack array with a dynamically resized heap allocation. If you previously observed this behavior, rebuild with the latest source.
-- Verify: From the main menu, enter `1` and complete the prompts. The account should be created successfully and the menu should display again.
+<details>
+<summary><b>Deposit/Withdrawal Protection</b></summary>
 
-## Known Limitations
+- ✅ File operations validated before confirming success
+- ✅ Balance verification before updates
+- ✅ Error messages for failed operations
+- ✅ Original balance preserved on failure
+</details>
 
-1. **Maximum Accounts**: 1,000 accounts can be displayed in delete operation
-2. **Account Number Generation**: May slow down when database is >90% full
-3. **File Locking**: No concurrent access protection (single-user system)
-4. **Index Recovery**: Manual recovery required if both index and backup fail
+<details>
+<summary><b>Remittance Protection</b></summary>
 
-## Development Notes
+- ✅ Automatic rollback if receiver update fails
+- ✅ Transaction log created before operations
+- ✅ Multi-step validation process
+- ✅ Sender balance restored on failure
+</details>
 
-### Floating-Point Handling
-All monetary calculations use `round_money()` function to prevent precision errors:
+### 📊 Index File Protection
+
+- ⚛️ Atomic writes using temporary files
+- 🛡️ Original index preserved if update fails
+- 🧹 Automatic cleanup of temporary files on errors
+- ♻️ Recovery mechanisms for partial writes
+
+**Error Recovery Process:**
+1. Create temporary file (`index_temp.txt`)
+2. Write new data to temporary file
+3. Validate temporary file
+4. Atomic rename (replaces original)
+5. Cleanup on any failure
+
+---
+
+## 🧪 Testing
+
+The application includes a comprehensive **automated test suite** with 10 critical test cases covering all major functionality.
+
+### 🎯 Quick Test
+
+#### Linux/Mac
+
+```bash
+cd test_cases
+chmod +x run_tests.sh
+./run_tests.sh
+# Select option 4: "Build and Run All Tests"
+```
+
+#### Windows
+
+```cmd
+cd test_cases
+run_tests.bat
+REM Select option 4: "Build and Run All Tests"
+```
+
+### 📋 Test Coverage
+
+| Category | Test Cases | Status |
+|----------|-----------|--------|
+| Account Creation | Valid/Invalid inputs, ID validation | ✅ Covered |
+| Deposits | Amount validation, balance updates | ✅ Covered |
+| Withdrawals | Insufficient funds, balance checks | ✅ Covered |
+| Transfers | Fee calculation, rollback, validation | ✅ Covered |
+| Security | Buffer overflow, input sanitization | ✅ Covered |
+| Integration | Complete lifecycle testing | ✅ Covered |
+
+### 📊 Test Results
+
+After running the test suite, you should see:
+
+```
+========================================
+         TEST EXECUTION SUMMARY         
+========================================
+Total Tests:   10
+Passed:        10
+Failed:        0
+Skipped:       0
+Pass Rate:     100.00%
+========================================
+✓ ALL TESTS PASSED!
+```
+
+### 📖 Testing Documentation
+
+For detailed testing information, see:
+- [`test_cases/README.md`](test_cases/README.md) - Complete testing guide
+- [`test_cases/TOP_10_TEST_CASES.md`](test_cases/TEST_CASES.md) - Critical test cases
+- [`test_cases/TEST_CASES.md`](QUICK_START.md) - Comprehensive test documentation
+
+---
+
+## 🔧 Troubleshooting
+
+<details>
+<summary><b>Program exits when selecting "1. Create New Bank Account"</b></summary>
+
+**Symptom:** The application appears to exit or crash immediately after entering option 1 in the main menu.
+
+**Cause:** This was due to a large array being allocated on the stack during account number uniqueness checks, which could overflow the default Windows stack.
+
+**Status:** ✅ **Fixed on 2025-11-04** by replacing the stack array with a dynamically resized heap allocation.
+
+**Verify:** From the main menu, enter `1` and complete the prompts. The account should be created successfully and the menu should display again.
+
+</details>
+
+<details>
+<summary><b>GCC not found or compilation errors</b></summary>
+
+**Solution:** Ensure GCC is installed and in your PATH.
+
+```bash
+# Check GCC installation
+gcc --version
+
+# Install GCC if needed
+sudo apt-get install gcc    # Ubuntu/Debian
+brew install gcc            # macOS
+# Windows: Install MinGW from mingw.org
+```
+
+</details>
+
+<details>
+<summary><b>Database directory not created</b></summary>
+
+**Solution:** Ensure you have write permissions in the application directory.
+
+```bash
+# Manually create the directory if needed
+mkdir database              # Linux/Mac
+mkdir database              # Windows
+```
+
+</details>
+
+<details>
+<summary><b>Account file corruption errors</b></summary>
+
+**Symptoms:**
+- "ERROR: Account file corrupted. Please contact support."
+- Transactions blocked on specific accounts
+
+**Solutions:**
+1. Check the account file format manually
+2. Verify all required fields are present
+3. Ensure balance values are numeric
+4. Backup and recreate the account if necessary
+
+</details>
+
+---
+
+## ⚠️ Known Limitations
+
+## ⚠️ Known Limitations
+
+| Limitation | Description | Impact |
+|------------|-------------|--------|
+| **Account Display** | Maximum 1,000 accounts in delete operation | Low - UI limitation only |
+| **Number Generation** | May slow when database >90% full | Low - Rare scenario |
+| **File Locking** | No concurrent access protection | Medium - Single-user design |
+| **Index Recovery** | Manual recovery needed if both fail | Low - Rare scenario |
+
+> **Note:** These limitations are by design for an educational single-user system and do not affect normal operation.
+
+---
+
+## 👨‍💻 Development
+
+## 👨‍💻 Development
+
+### 💵 Floating-Point Handling
+
+All monetary calculations use the `round_money()` function to prevent precision errors:
+
 ```c
 double round_money(double amount) {
     return round(amount * 100.0) / 100.0;
 }
 ```
 
-### Platform Compatibility
+**Why this matters:**
+- Prevents rounding errors like `0.1 + 0.2 = 0.30000000000000004`
+- Ensures all amounts are exactly 2 decimal places
+- Critical for financial accuracy
+
+### 🖥️ Platform Compatibility
+
 The code uses conditional compilation for platform-specific features:
+
+```c
+#ifdef _WIN32
+    #include <direct.h>
+    #define mkdir(dir) _mkdir(dir)
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+#endif
+```
+
+**Platform-specific handling:**
 - Directory creation (`mkdir` vs `_mkdir`)
 - String comparison (`strcasecmp` vs `_stricmp`)
+- File path separators (`/` vs `\`)
 
-### Transaction Integrity
-Remittance operations use a multi-step process with logging:
-1. Create transaction log
-2. Update sender account
-3. Update receiver account
-4. Mark transaction complete
-5. Rollback on any failure
+### 🔄 Transaction Integrity
 
+Remittance operations use a multi-step process with logging for safety:
 
-### Current Version
-- Comprehensive input validation
-- Floating-point error protection
-- Account file corruption detection
-- Atomic file operations
-- Transaction rollback capability
-- Overflow protection
-- Cross-platform support (Windows/Linux)
+**Transaction Steps:**
+1. 📝 Create transaction log
+2. 💸 Update sender account
+3. 💰 Update receiver account
+4. ✅ Mark transaction complete
+5. ↩️ Rollback on any failure
 
-## Changelog
+**Code Pattern:**
+```c
+// Create transaction log
+FILE *log = create_transaction_log(sender, receiver, amount);
 
-- 2025-11-04: Fixed premature exit on selecting option 1 (Create New Bank Account). Replaced large stack allocation with dynamic memory in account number uniqueness check to prevent stack overflow, especially on Windows/MinGW.
+// Update sender (with rollback on failure)
+if (!update_sender_account(sender, amount)) {
+    rollback_transaction(log);
+    return FAILURE;
+}
 
-## License
+// Update receiver (with rollback on failure)
+if (!update_receiver_account(receiver, amount)) {
+    restore_sender_balance(sender, original_balance);
+    rollback_transaction(log);
+    return FAILURE;
+}
 
-This is an educational project developed for COMP1312 coursework.
+// Mark complete
+mark_transaction_complete(log);
+```
 
-## Author
+---
 
-University of Southampton Malaysia COMP1312 - Wong Jun Han 36493732 
+## 📦 Current Version Features
+## 📦 Current Version Features
+
+| Feature | Status |
+|---------|--------|
+| ✅ Comprehensive input validation | Implemented |
+| ✅ Floating-point error protection | Implemented |
+| ✅ Account file corruption detection | Implemented |
+| ✅ Atomic file operations | Implemented |
+| ✅ Transaction rollback capability | Implemented |
+| ✅ Overflow protection | Implemented |
+| ✅ Cross-platform support (Windows/Linux/Mac) | Implemented |
+| ✅ ID length validation (7-12 digits) |  |
+| ✅ Automated test suite (10 tests) |  |
+
+---
+
+## 📝 Changelog
+
+### Version 1.2 (2025-11-05)
+- ✨ Added automated test suite with 10 critical test cases
+- ✨ Updated README with modern GitHub styling
+- 🐛 Fixed database path handling in test suite
+- 📚 Comprehensive testing documentation
+
+### Version 1.1 (2025-11-04)
+- 🐛 **Fixed:** Premature exit on selecting option 1 (Create New Bank Account)
+  - Replaced large stack allocation with dynamic memory
+  - Prevents stack overflow on Windows/MinGW
+  - Account number uniqueness check now uses heap allocation
+
+### Version 1.0 (Initial Release)
+- ✨ Core banking operations (Create, Delete, Deposit, Withdraw, Transfer)
+- ✨ Input validation and security features
+- ✨ Transaction safety and rollback mechanisms
+- ✨ Cross-platform compatibility
+
+---
+
+## 📖 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [README.md](README.md) | Main project documentation (this file) |
+| [USER_MANUAL.md](USER_MANUAL.md) | User guide and operating instructions |
+| [test_cases/README.md](test_cases/README.md) | Testing guide and documentation |
+
+---
+
+## 📄 License
+
+This is an educational project developed for **COMP1312 coursework** at the University of Southampton Malaysia.
+
+### Academic Use Only
+
+- 📚 For learning and educational purposes
+- 🎓 Part of university coursework
+- ⚠️ Not intended for production use
+
+---
+
+## 👤 Author
+
+**Wong Jun Han**  
+📧 Student ID: 36493732  
+🏫 University of Southampton Malaysia  
+📘 Course: COMP1312
+
+---
+
+<div align="center">
+
+**🏦 Banking System Application**
+
+Made with ❤️ for COMP1312 Coursework
+
+⭐ Star this repository if you find it helpful!
+
+[Back to Top](#-banking-system-application)
+
+</div> 
