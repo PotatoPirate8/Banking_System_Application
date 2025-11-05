@@ -1,6 +1,0 @@
-Name: no
-ID: 1010
-Account Type: Current
-PIN: 1010
-Account Number: 1008839
-Current Balance: 127.34

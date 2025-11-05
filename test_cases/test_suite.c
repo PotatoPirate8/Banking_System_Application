@@ -94,13 +94,13 @@ TestResults test_results = {0, 0, 0, 0};
 
 // Helper functions
 void clean_database() {
-    // Remove all files in database directory
-    system("rm -rf database/* 2>/dev/null || del /Q database\\* 2>NUL");
+    // Remove all files in parent directory's database directory
+    system("rm -rf ../database/* 2>/dev/null || del /Q ..\\database\\* 2>NUL");
 }
 
 void setup_test_environment() {
     clean_database();
-    mkdir("database");
+    mkdir("../database");
 }
 
 int file_exists(const char *filename) {
@@ -111,7 +111,7 @@ int file_exists(const char *filename) {
 int create_test_account(const char *name, const char *id, const char *type, 
                         const char *pin, int account_number, double balance) {
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     
     FILE *fp = fopen(filename, "w");
     if (fp == NULL) return 0;
@@ -125,7 +125,7 @@ int create_test_account(const char *name, const char *id, const char *type,
     fclose(fp);
     
     // Add to index
-    fp = fopen("database/index.txt", "a");
+    fp = fopen("../database/index.txt", "a");
     if (fp == NULL) return 0;
     fprintf(fp, "%d|%s|%s|%s\n", account_number, name, id, type);
     fclose(fp);
@@ -135,7 +135,7 @@ int create_test_account(const char *name, const char *id, const char *type,
 
 double read_account_balance(int account_number) {
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) return -1.0;
@@ -158,7 +158,7 @@ double read_account_balance(int account_number) {
 
 int read_account_field(int account_number, const char *field, char *value, size_t max_len) {
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) return 0;
@@ -185,7 +185,7 @@ int read_account_field(int account_number, const char *field, char *value, size_
 }
 
 int count_index_entries() {
-    FILE *fp = fopen("database/index.txt", "r");
+    FILE *fp = fopen("../database/index.txt", "r");
     if (fp == NULL) return 0;
     
     int count = 0;
@@ -215,7 +215,7 @@ int test_create_valid_account() {
     
     // Verify account file exists
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     ASSERT_TRUE(file_exists(filename), "Account file does not exist");
     
     // Verify account fields
@@ -289,10 +289,10 @@ int test_deposit_money() {
     
     // Update the account file
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     
     FILE *fp = fopen(filename, "r");
-    FILE *temp = fopen("database/temp.txt", "w");
+    FILE *temp = fopen("../database/temp.txt", "w");
     
     if (fp && temp) {
         char line[256];
@@ -308,7 +308,7 @@ int test_deposit_money() {
         fclose(temp);
         
         remove(filename);
-        rename("database/temp.txt", filename);
+        rename("../database/temp.txt", filename);
     }
     
     // Verify new balance
@@ -418,7 +418,7 @@ int test_delete_account() {
                        account_number, 500.00);
     
     char filename[100];
-    sprintf(filename, "database/%d.txt", account_number);
+    sprintf(filename, "../database/%d.txt", account_number);
     
     // Verify account exists
     ASSERT_TRUE(file_exists(filename), "Account file should exist before deletion");
@@ -430,8 +430,8 @@ int test_delete_account() {
     remove(filename);
     
     // Update index (remove entry)
-    FILE *index = fopen("database/index.txt", "r");
-    FILE *temp = fopen("database/index_temp.txt", "w");
+    FILE *index = fopen("../database/index.txt", "r");
+    FILE *temp = fopen("../database/index_temp.txt", "w");
     
     if (index && temp) {
         char line[256];
@@ -446,8 +446,8 @@ int test_delete_account() {
         fclose(index);
         fclose(temp);
         
-        remove("database/index.txt");
-        rename("database/index_temp.txt", "database/index.txt");
+        remove("../database/index.txt");
+        rename("../database/index_temp.txt", "../database/index.txt");
     }
     
     // Verify account deleted
@@ -580,7 +580,7 @@ int test_complete_lifecycle() {
     
     // Step 6: Delete Alice's account
     char alice_file[100];
-    sprintf(alice_file, "database/%d.txt", alice_account);
+    sprintf(alice_file, "../database/%d.txt", alice_account);
     remove(alice_file);
     
     ASSERT_FALSE(file_exists(alice_file), "Alice's account should be deleted");
@@ -588,7 +588,7 @@ int test_complete_lifecycle() {
     
     // Step 7: Verify Bob's account still exists
     char bob_file[100];
-    sprintf(bob_file, "database/%d.txt", bob_account);
+    sprintf(bob_file, "../database/%d.txt", bob_account);
     ASSERT_TRUE(file_exists(bob_file), "Bob's account should still exist");
     printf("  ✓ Step 7: Bob's account intact\n");
     
