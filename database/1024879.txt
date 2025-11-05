@@ -1,0 +1,6 @@
+Name: lol
+ID: 12344567890
+Account Type: Savings
+PIN: 1234
+Account Number: 1024879
+Initial Deposit: 0.00

@@ -281,14 +281,23 @@ void get_name_input(char *name, size_t size) {
 // Get and validate ID input
 void get_id_input(char *id, size_t size) {
     while (1) {
-        printf("Enter Identification Number (digits only): ");
+        printf("Enter Identification Number (7-12 digits only): ");
         fgets(id, size, stdin);
         id[strcspn(id, "\n")] = 0;
         
-        if (validate_id(id)) {
-            break;
+        if (!validate_id(id)) {
+            printf("Invalid ID! Please enter digits only.\n");
+            continue;
         }
-        printf("Invalid ID! Please enter digits only.\n");
+        
+        // Check ID length is within range
+        size_t id_length = strlen(id);
+        if (id_length < 7 || id_length > 12) {
+            printf("Invalid ID length! ID must be between 7 and 12 digits.\n");
+            continue;
+        }
+        
+        break;
     }
 }
 
@@ -817,7 +826,7 @@ int Deposit_Money(void) {
     
     AccountData account;
     if (!read_account_file(filename, &account)) {
-        printf("Error: Could not read account file or file is corrupted.\n");
+        printf("Error: Could not find account file or file is corrupted.\n");
         printf("Please contact support for assistance.\n");
         return -1;
     }

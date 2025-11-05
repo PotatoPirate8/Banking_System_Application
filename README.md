@@ -140,7 +140,7 @@ If an account file is corrupted or missing required fields:
 - Original index preserved if update fails
 - Cleanup of temporary files on errors
 
-## Troubleshooting
+## Troubleshooting Experience
 
 ### Program exits when selecting "1. Create New Bank Account"
 - Symptom: The application appears to exit or crash immediately after entering option 1 in the main menu.
