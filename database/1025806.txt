@@ -1,0 +1,6 @@
+Name: Wong
+ID: 1234567
+Account Type: Savings
+PIN: 1234
+Account Number: 1025806
+Initial Deposit: 0.00
