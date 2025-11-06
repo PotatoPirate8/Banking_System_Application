@@ -423,8 +423,6 @@ mkdir database              # Windows
 
 ## ⚠️ Known Limitations
 
-## ⚠️ Known Limitations
-
 | Limitation | Description | Impact |
 |------------|-------------|--------|
 | **Account Display** | Maximum 1,000 accounts in delete operation | Low - UI limitation only |
@@ -435,8 +433,6 @@ mkdir database              # Windows
 > **Note:** These limitations are by design for an educational single-user system and do not affect normal operation.
 
 ---
-
-## 👨‍💻 Development
 
 ## 👨‍💻 Development
 
@@ -509,7 +505,6 @@ mark_transaction_complete(log);
 
 ---
 
-## 📦 Current Version Features
 ## 📦 Current Version Features
 
 | Feature | Status |
