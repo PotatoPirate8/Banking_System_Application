@@ -11,13 +11,81 @@
 
 // Platform-specific includes for directory creation
 #ifdef _WIN32
-    #include <direct.h>  // For _mkdir on Windows   
+    #include <direct.h>
     #define mkdir(dir) _mkdir(dir)
-    #define strcasecmp _stricmp  // Windows uses _stricmp instead of strcasecmp
+    #define strcasecmp _stricmp
 #else
     #include <sys/stat.h>
     #include <sys/types.h>
 #endif
+
+// ==================== TRANSACTION LOGGING ====================
+
+/**
+ * Log transaction details to transaction.log file
+ * Records all banking operations for audit trail
+ */
+void log_transaction(const char* operation, int account_number, const char* details, double amount, const char* status) {
+    FILE *log_file = fopen("transaction.log", "a");
+    if (log_file != NULL) {
+        time_t now = time(NULL);
+        char timestamp[64] = "Unknown time";
+        struct tm *tm_info = localtime(&now);
+        if (tm_info) {
+            strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
+        }
+        
+        fprintf(log_file, "[%s] %s - Account: %d - Amount: RM%.2f - %s - Status: %s\n", 
+                timestamp, operation, account_number, amount, details, status);
+        fclose(log_file);
+    }
+}
+
+// ==================== INPUT SAFETY HELPER ====================
+
+/**
+ * Safe wrapper for fgets that handles buffer overflow and cleans stdin
+ * Returns: pointer to buffer on success, NULL on EOF or error
+ * 
+ * This function:
+ * 1. Reads input using fgets
+ * 2. Removes trailing newline if present
+ * 3. Drains any remaining characters in stdin if buffer was filled
+ * 4. Prevents leftover input from affecting subsequent prompts
+ */
+char* safe_fgets(char *buffer, int size, FILE *stream) {
+    if (buffer == NULL || size <= 0 || stream == NULL) {
+        return NULL;
+    }
+    
+    // Read input using fgets
+    char *result = fgets(buffer, size, stream);
+    
+    // Handle EOF or error
+    if (result == NULL) {
+        return NULL;
+    }
+    
+    // Find the newline character
+    char *newline = strchr(buffer, '\n');
+    
+    if (newline != NULL) {
+        // Newline found - normal case, remove it
+        *newline = '\0';
+    } else {
+        // No newline found - buffer was filled, drain remaining input
+        // This prevents leftover characters from affecting the next prompt
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF) {
+            // Drain remaining characters
+        }
+        
+        // If we hit EOF while draining, that's still valid input
+        // The buffer contains what was read before EOF
+    }
+    
+    return buffer;
+}
 
 // ==================== VALIDATION HELPER FUNCTIONS ====================
 
@@ -268,8 +336,10 @@ int read_account_file(const char *filename, AccountData *account) {
 void get_name_input(char *name, size_t size) {
     while (1) {
         printf("Enter name (letters and spaces only): ");
-        fgets(name, size, stdin);
-        name[strcspn(name, "\n")] = 0;
+        if (safe_fgets(name, size, stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
         
         if (validate_name(name)) {
             break;
@@ -282,8 +352,10 @@ void get_name_input(char *name, size_t size) {
 void get_id_input(char *id, size_t size) {
     while (1) {
         printf("Enter Identification Number (7-12 digits only): ");
-        fgets(id, size, stdin);
-        id[strcspn(id, "\n")] = 0;
+        if (safe_fgets(id, size, stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
         
         if (!validate_id(id)) {
             printf("Invalid ID! Please enter digits only.\n");
@@ -305,8 +377,10 @@ void get_id_input(char *id, size_t size) {
 void get_account_type_input(char *account_type, size_t size) {
     while (1) {
         printf("Type of Account (Savings or Current): ");
-        fgets(account_type, size, stdin);
-        account_type[strcspn(account_type, "\n")] = 0;
+        if (safe_fgets(account_type, size, stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
         
         if (validate_account_type(account_type)) {
             // Normalize the input to proper case
@@ -325,8 +399,10 @@ void get_account_type_input(char *account_type, size_t size) {
 void get_pin_input(char *pin, size_t size) {
     while (1) {
         printf("Create 4-digit PIN: ");
-        fgets(pin, size, stdin);
-        pin[strcspn(pin, "\n")] = 0;
+        if (safe_fgets(pin, size, stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
         
         if (validate_pin(pin)) {
             break;
@@ -368,8 +444,10 @@ int Create_New_Bank_Account(void) {
         // Ask for confirmation
         while (1) {
             printf("\nIs all information correct? (yes/no): ");
-            fgets(confirm, sizeof(confirm), stdin);
-            confirm[strcspn(confirm, "\n")] = 0;
+            if (safe_fgets(confirm, sizeof(confirm), stdin) == NULL) {
+                printf("Error reading input. Please try again.\n");
+                continue;
+            }
             
             if (strcasecmp(confirm, "yes") == 0 || strcasecmp(confirm, "y") == 0) {
                 goto create_account;  // Proceed to account creation
@@ -535,6 +613,7 @@ create_account:
     // Check if file opened successfully
     if (fptr == NULL) {
         fprintf(stderr, "Error opening file: %s\n", strerror(errno));
+        log_transaction("CREATE_ACCOUNT", bank_account_number, "File creation failed", 0.0, "FAILED");
         return -1; // Indicate failure
     }
 
@@ -581,6 +660,12 @@ create_account:
     }
 
     printf("Created your new bank account successfully!\n");
+    
+    // Log the transaction
+    char log_details[200];
+    sprintf(log_details, "Name: %s, Type: %s", name, account_type);
+    log_transaction("CREATE_ACCOUNT", bank_account_number, log_details, initial_deposit, "SUCCESS");
+    
     return 0; // Success
 }
 
@@ -661,8 +746,10 @@ int Delete_Bank_Account(void) {
     // Validate last 4 digits of ID
     while (1) {
         printf("Enter the last 4 digits of your ID: ");
-        fgets(id_last4, sizeof(id_last4), stdin);
-        id_last4[strcspn(id_last4, "\n")] = 0;
+        if (safe_fgets(id_last4, sizeof(id_last4), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate that input is exactly 4 digits
         if (strlen(id_last4) != 4) {
@@ -694,6 +781,7 @@ int Delete_Bank_Account(void) {
 
     if (strcmp(id_last4, actual_last4) != 0) {
         printf("ID verification failed. Account deletion cancelled.\n");
+        log_transaction("DELETE_ACCOUNT", account_to_delete, "ID verification failed", 0.0, "FAILED");
         return -1;
     }
 
@@ -718,8 +806,10 @@ int Delete_Bank_Account(void) {
     // Validate PIN input
     while (1) {
         printf("Enter your 4-digit PIN: ");
-        fgets(pin_input, sizeof(pin_input), stdin);
-        pin_input[strcspn(pin_input, "\n")] = 0;
+        if (safe_fgets(pin_input, sizeof(pin_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate PIN format
         if (!validate_pin(pin_input)) {
@@ -732,14 +822,17 @@ int Delete_Bank_Account(void) {
 
     if (strcmp(pin_input, stored_pin) != 0) {
         printf("PIN verification failed. Account deletion cancelled.\n");
+        log_transaction("DELETE_ACCOUNT", account_to_delete, "PIN verification failed", 0.0, "FAILED");
         return -1;
     }
 
     // Final confirmation
     char confirm[10];
     printf("\nAre you sure you want to permanently delete this account? (yes/no): ");
-    fgets(confirm, sizeof(confirm), stdin);
-    confirm[strcspn(confirm, "\n")] = 0;
+    if (safe_fgets(confirm, sizeof(confirm), stdin) == NULL) {
+        printf("Error reading input. Account deletion cancelled.\n");
+        return 0;
+    }
 
     if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
         printf("Account deletion cancelled.\n");
@@ -784,6 +877,11 @@ int Delete_Bank_Account(void) {
 
     printf("\nAccount %d has been successfully deleted.\n", account_to_delete);
     printf("All associated data has been removed from the system.\n");
+    
+    // Log the transaction
+    char log_details[200];
+    sprintf(log_details, "Name: %s, Type: %s", names[selected_index], account_types[selected_index]);
+    log_transaction("DELETE_ACCOUNT", account_to_delete, log_details, 0.0, "SUCCESS");
 
     return 0; // Success
 }
@@ -799,8 +897,10 @@ int Deposit_Money(void) {
     
     while (1) {
         printf("Enter your account number: ");
-        fgets(account_input, sizeof(account_input), stdin);
-        account_input[strcspn(account_input, "\n")] = 0;
+        if (safe_fgets(account_input, sizeof(account_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate numeric input
         char *endptr;
@@ -836,8 +936,10 @@ int Deposit_Money(void) {
     
     while (1) {
         printf("Enter your 4-digit PIN: ");
-        fgets(pin_input, sizeof(pin_input), stdin);
-        pin_input[strcspn(pin_input, "\n")] = 0;
+        if (safe_fgets(pin_input, sizeof(pin_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate PIN format
         if (!validate_pin(pin_input)) {
@@ -867,8 +969,10 @@ int Deposit_Money(void) {
     
     while (1) {
         printf("\nEnter amount to deposit (RM0.01 - RM50,000.00): RM ");
-        fgets(amount_str, sizeof(amount_str), stdin);
-        amount_str[strcspn(amount_str, "\n")] = 0;
+        if (safe_fgets(amount_str, sizeof(amount_str), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate money format (max 2 decimal places)
         if (!validate_money_format(amount_str)) {
@@ -924,8 +1028,10 @@ int Deposit_Money(void) {
     printf("New Balance: RM %.2f\n", new_balance);
     printf("========================================\n");
     printf("Confirm deposit? (yes/no): ");
-    fgets(confirm, sizeof(confirm), stdin);
-    confirm[strcspn(confirm, "\n")] = 0;
+    if (safe_fgets(confirm, sizeof(confirm), stdin) == NULL) {
+        printf("Error reading input. Deposit cancelled.\n");
+        return 0;
+    }
 
     if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
         printf("Deposit cancelled.\n");
@@ -976,6 +1082,11 @@ int Deposit_Money(void) {
     printf("Amount Deposited: RM %.2f\n", deposit_amount);
     printf("New Balance: RM %.2f\n", new_balance);
     printf("========================================\n");
+    
+    // Log the transaction
+    char log_details[200];
+    sprintf(log_details, "Previous Balance: RM%.2f, New Balance: RM%.2f", account.balance, new_balance);
+    log_transaction("DEPOSIT", account_number, log_details, deposit_amount, "SUCCESS");
 
     return 0; // Success
 }
@@ -991,8 +1102,10 @@ int Withdraw_Money(void) {
     
     while (1) {
         printf("Enter your account number: ");
-        fgets(account_input, sizeof(account_input), stdin);
-        account_input[strcspn(account_input, "\n")] = 0;
+        if (safe_fgets(account_input, sizeof(account_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate numeric input
         char *endptr;
@@ -1028,8 +1141,10 @@ int Withdraw_Money(void) {
     
     while (1) {
         printf("Enter your 4-digit PIN: ");
-        fgets(pin_input, sizeof(pin_input), stdin);
-        pin_input[strcspn(pin_input, "\n")] = 0;
+        if (safe_fgets(pin_input, sizeof(pin_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate PIN format
         if (!validate_pin(pin_input)) {
@@ -1065,8 +1180,10 @@ int Withdraw_Money(void) {
     
     while (1) {
         printf("\nEnter amount to withdraw: RM ");
-        fgets(amount_str, sizeof(amount_str), stdin);
-        amount_str[strcspn(amount_str, "\n")] = 0;
+        if (safe_fgets(amount_str, sizeof(amount_str), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate money format (max 2 decimal places)
         if (!validate_money_format(amount_str)) {
@@ -1132,8 +1249,10 @@ int Withdraw_Money(void) {
     printf("New Balance: RM %.2f\n", new_balance);
     printf("========================================\n");
     printf("Confirm withdrawal? (yes/no): ");
-    fgets(confirm, sizeof(confirm), stdin);
-    confirm[strcspn(confirm, "\n")] = 0;
+    if (safe_fgets(confirm, sizeof(confirm), stdin) == NULL) {
+        printf("Error reading input. Withdrawal cancelled.\n");
+        return 0;
+    }
 
     if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
         printf("Withdrawal cancelled.\n");
@@ -1184,6 +1303,11 @@ int Withdraw_Money(void) {
     printf("Amount Withdrawn: RM %.2f\n", withdrawal_amount);
     printf("New Balance: RM %.2f\n", new_balance);
     printf("========================================\n");
+    
+    // Log the transaction
+    char log_details[200];
+    sprintf(log_details, "Previous Balance: RM%.2f, New Balance: RM%.2f", account.balance, new_balance);
+    log_transaction("WITHDRAWAL", account_number, log_details, withdrawal_amount, "SUCCESS");
 
     return 0; // Success
 }
@@ -1199,8 +1323,10 @@ int Remittance(void) {
     
     while (1) {
         printf("Enter your account number (sender): ");
-        fgets(account_input, sizeof(account_input), stdin);
-        account_input[strcspn(account_input, "\n")] = 0;
+        if (safe_fgets(account_input, sizeof(account_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate numeric input
         char *endptr;
@@ -1236,8 +1362,10 @@ int Remittance(void) {
     
     while (1) {
         printf("Enter your 4-digit PIN: ");
-        fgets(pin_input, sizeof(pin_input), stdin);
-        pin_input[strcspn(pin_input, "\n")] = 0;
+        if (safe_fgets(pin_input, sizeof(pin_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate PIN format
         if (!validate_pin(pin_input)) {
@@ -1250,6 +1378,7 @@ int Remittance(void) {
 
     if (strcmp(pin_input, sender_account_data.pin) != 0) {
         printf("PIN verification failed. Access denied.\n");
+        log_transaction("REMITTANCE_SEND", sender_account, "PIN verification failed", 0.0, "FAILED");
         return -1;
     }
 
@@ -1273,8 +1402,10 @@ int Remittance(void) {
     
     while (1) {
         printf("\nEnter receiver's account number: ");
-        fgets(account_input, sizeof(account_input), stdin);
-        account_input[strcspn(account_input, "\n")] = 0;
+        if (safe_fgets(account_input, sizeof(account_input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate numeric input
         char *endptr;
@@ -1326,8 +1457,10 @@ int Remittance(void) {
     
     while (1) {
         printf("\nEnter amount to transfer: RM ");
-        fgets(amount_str, sizeof(amount_str), stdin);
-        amount_str[strcspn(amount_str, "\n")] = 0;
+        if (safe_fgets(amount_str, sizeof(amount_str), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
+            continue;
+        }
 
         // Validate money format (max 2 decimal places)
         if (!validate_money_format(amount_str)) {
@@ -1427,8 +1560,10 @@ int Remittance(void) {
     // Confirm transaction
     char confirm[10];
     printf("Confirm transfer? (yes/no): ");
-    fgets(confirm, sizeof(confirm), stdin);
-    confirm[strcspn(confirm, "\n")] = 0;
+    if (safe_fgets(confirm, sizeof(confirm), stdin) == NULL) {
+        printf("Error reading input. Transfer cancelled.\n");
+        return 0;
+    }
 
     if (strcasecmp(confirm, "yes") != 0 && strcasecmp(confirm, "y") != 0) {
         printf("Transfer cancelled.\n");
@@ -1668,6 +1803,16 @@ int Remittance(void) {
     printf("Your New Balance: RM %.2f\n", sender_new_balance);
     printf("Receiver's New Balance: RM %.2f\n", receiver_new_balance);
     printf("========================================\n");
+    
+    // Log the transaction for both accounts
+    char sender_details[300];
+    char receiver_details[300];
+    sprintf(sender_details, "Transfer to Account %d, Fee: RM%.2f, Previous Balance: RM%.2f, New Balance: RM%.2f", 
+            receiver_account, remittance_fee, sender_account_data.balance, sender_new_balance);
+    sprintf(receiver_details, "Transfer from Account %d, Previous Balance: RM%.2f, New Balance: RM%.2f", 
+            sender_account, receiver_account_data.balance, receiver_new_balance);
+    log_transaction("REMITTANCE_SEND", sender_account, sender_details, transfer_amount, "SUCCESS");
+    log_transaction("REMITTANCE_RECEIVE", receiver_account, receiver_details, transfer_amount, "SUCCESS");
 
     return 0; // Success
 }
@@ -1676,11 +1821,18 @@ int main(void) {
     // Seed the random number generator
     srand(time(NULL));
     
+    // Initialize transaction log with session start
+    log_transaction("SESSION_START", 0, "Banking system started", 0.0, "INFO");
+    
     int choice;
+    char input[100];
+    
     while (1) {
-        printf("\nBank Account Management System\n");
-        printf("--------------------------------\n");
-        /* Show session info: current date/time and count of loaded accounts from index */
+        printf("\n==========================================\n");
+        printf("     BANK ACCOUNT MANAGEMENT SYSTEM      \n");
+        printf("==========================================\n");
+        
+        // Enhanced session information display
         {
             time_t now = time(NULL);
             char timebuf[64] = "Unknown time";
@@ -1690,58 +1842,115 @@ int main(void) {
             }
 
             int loaded_accounts = 0;
+            double total_balance = 0.0;
             FILE *fa = fopen("database/index.txt", "r");
             if (fa) {
                 char line[512];
                 while (fgets(line, sizeof(line), fa)) {
-                    char *p = line;
-                    while (*p && isspace((unsigned char)*p)) p++;
-                    if (*p != '\0' && *p != '\n') loaded_accounts++;
+                    int acc_num;
+                    char name[100], id[20], type[20];
+                    if (sscanf(line, "%d|%99[^|]|%19[^|]|%19[^\n]", &acc_num, name, id, type) == 4) {
+                        loaded_accounts++;
+                        
+                        // Read account balance
+                        char filename[100];
+                        sprintf(filename, "database/%d.txt", acc_num);
+                        AccountData account;
+                        if (read_account_file(filename, &account)) {
+                            total_balance += account.balance;
+                        }
+                    }
                 }
                 fclose(fa);
             }
 
-            printf("Session started: %s\n", timebuf);
-            printf("Loaded accounts: %d\n\n", loaded_accounts);
+            printf("Session Time: %s\n", timebuf);
+            printf("Total Accounts: %d\n", loaded_accounts);
+            printf("Total System Balance: RM %.2f\n", total_balance);
+            printf("Database Status: %s\n", (loaded_accounts > 0) ? "Active" : "Empty");
         }
-        printf("Select :\n");
-        printf("1. Create New Bank Account\n");
-        printf("2. Delete Bank Account\n");
-        printf("3. Deposit Money\n");
-        printf("4. Withdraw Money\n");
-        printf("5. Remittance\n");
-        printf("6. Exit\n");
-        printf("Enter your choice: ");
+        
+        printf("\n------------------------------------------\n");
+        printf("            MAIN MENU OPTIONS            \n");
+        printf("------------------------------------------\n");
+        printf("1. Create New Bank Account   [create]\n");
+        printf("2. Delete Bank Account       [delete]\n");
+        printf("3. Deposit Money             [deposit]\n");
+        printf("4. Withdraw Money            [withdraw]\n");
+        printf("5. Money Transfer/Remittance [remittance]\n");
+        printf("6. Exit Program              [exit]\n");
+        printf("------------------------------------------\n");
+        printf("Enter choice (number or keyword): ");
 
-        if (scanf("%d", &choice) != 1) {
-            fprintf(stderr, "Invalid input. Please enter a number.\n");
-            while (getchar() != '\n'); // Clear invalid input
+        // Get input and handle both numbers and keywords
+        if (safe_fgets(input, sizeof(input), stdin) == NULL) {
+            printf("Error reading input. Please try again.\n");
             continue;
         }
-        while (getchar() != '\n'); 
+        
+        // Convert input to lowercase for keyword matching
+        char lower_input[100];
+        strcpy(lower_input, input);
+        for (int i = 0; lower_input[i]; i++) {
+            lower_input[i] = tolower((unsigned char)lower_input[i]);
+        }
+        
+        // Parse choice from number or keyword
+        choice = 0;
+        if (strcmp(lower_input, "1") == 0 || strcmp(lower_input, "create") == 0) {
+            choice = 1;
+        } else if (strcmp(lower_input, "2") == 0 || strcmp(lower_input, "delete") == 0) {
+            choice = 2;
+        } else if (strcmp(lower_input, "3") == 0 || strcmp(lower_input, "deposit") == 0) {
+            choice = 3;
+        } else if (strcmp(lower_input, "4") == 0 || strcmp(lower_input, "withdraw") == 0) {
+            choice = 4;
+        } else if (strcmp(lower_input, "5") == 0 || strcmp(lower_input, "remittance") == 0 || strcmp(lower_input, "transfer") == 0) {
+            choice = 5;
+        } else if (strcmp(lower_input, "6") == 0 || strcmp(lower_input, "exit") == 0 || strcmp(lower_input, "quit") == 0) {
+            choice = 6;
+        } else {
+            printf("\nInvalid choice. Please enter a number (1-6) or keyword (create, delete, deposit, withdraw, remittance, exit).\n");
+            continue;
+        }
 
+        printf("\n");
+        
         switch (choice) {
             case 1:
+                printf("=== CREATE NEW BANK ACCOUNT ===\n");
                 Create_New_Bank_Account();
                 break;
             case 2:
+                printf("=== DELETE BANK ACCOUNT ===\n");
                 Delete_Bank_Account();
                 break;
             case 3:
+                printf("=== DEPOSIT MONEY ===\n");
                 Deposit_Money();
                 break;
             case 4:
+                printf("=== WITHDRAW MONEY ===\n");
                 Withdraw_Money();
                 break;
             case 5:
+                printf("=== MONEY TRANSFER/REMITTANCE ===\n");
                 Remittance();
                 break;
             case 6:
-                printf("Exiting the program.\n");
+                printf("==========================================\n");
+                printf("         THANK YOU FOR BANKING WITH US    \n");
+                printf("==========================================\n");
+                printf("Session ended successfully.\n");
+                log_transaction("SESSION_END", 0, "Banking system closed", 0.0, "INFO");
                 return 0;
             default:
-                printf("Invalid choice. Please enter a number between 1 and 6.\n");
+                printf("Unexpected error in choice handling.\n");
         }
+        
+        // Pause for user to read results
+        printf("\nPress Enter to continue...");
+        while (getchar() != '\n'); // Wait for Enter key
     }
     return 0;
 }
