@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏦 Banking System Test Suite
+# Banking System Test Suite
 
 [![C](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)](https://en.wikipedia.org/wiki/C_(programming_language))
 [![GCC](https://img.shields.io/badge/GCC-Compiler-blue?style=for-the-badge)](https://gcc.gnu.org/)
@@ -9,29 +9,29 @@
 
 **Automated testing framework for the Banking System Application**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Test Cases](#-test-cases) • [Documentation](#-documentation)
+[Features](#features) | [Quick Start](#quick-start) | [Test Cases](#test-cases) | [Documentation](#documentation)
 
 </div>
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Quick Start](#-quick-start)
-- [Test Cases](#-test-cases)
-- [Build Scripts](#-build-scripts)
-- [Test Coverage](#-test-coverage)
-- [Documentation](#-documentation)
-- [Troubleshooting](#-troubleshooting)
-- [Contributing](#-contributing)
+- [Overview](#overview)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Test Cases](#test-cases)
+- [Build Scripts](#build-scripts)
+- [Test Coverage](#test-coverage)
+- [Documentation](#documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
-## 🔍 Overview
+## Overview
 
 This directory contains a comprehensive automated testing suite for the Banking System Application. The test framework validates critical functionality including account operations, transaction processing, fee calculations, and security measures.
 
-### 📁 Test Files
+### Test Files
 
 | File | Description |
 |------|-------------|
@@ -40,19 +40,19 @@ This directory contains a comprehensive automated testing suite for the Banking 
 | `run_tests.sh` | Linux/Mac build and execution script |
 | `run_tests.bat` | Windows build and execution script |
 
-## ✨ Features
+## Features
 
-- ✅ **10 Automated Test Cases** - Comprehensive coverage of critical functionality
-- ✅ **Cross-Platform Support** - Works on Windows, Linux, and macOS
-- ✅ **Color-Coded Output** - Visual feedback with ANSI color codes
-- ✅ **Detailed Reporting** - Test summaries with pass rates
-- ✅ **Automatic Cleanup** - Database setup and teardown
-- ✅ **Zero Dependencies** - Only requires GCC compiler
-- ✅ **Menu-Driven Interface** - Easy-to-use build scripts
+- **10 Automated Test Cases** - Comprehensive coverage of critical functionality
+- **Cross-Platform Support** - Works on Windows, Linux, and macOS
+- **Color-Coded Output** - Visual feedback with ANSI color codes
+- **Detailed Reporting** - Test summaries with pass rates
+- **Automatic Cleanup** - Database setup and teardown
+- **Zero Dependencies** - Only requires GCC compiler
+- **Menu-Driven Interface** - Easy-to-use build scripts
 
-## 🚀 Quick Start
+## Quick Start
 
-### Option 1: Using Build Scripts (Recommended) ⭐
+### Option 1: Using Build Scripts (Recommended)
 
 #### Linux/Mac/Unix
 ```bash
@@ -102,17 +102,17 @@ gcc -o test_suite test_suite.c -lm
 
 ---
 
-## 📊 Test Cases
+## Test Cases
 
 The automated test suite includes **10 critical test cases** covering all major functionality:
 
 | # | Test ID | Description | Category |
 |---|---------|-------------|----------|
 | 1 | TC-AC-001 | Create Account with Valid Inputs | Account Creation |
-| 2 | TC-AC-205 | ID Length Validation (7-12 digits) | Validation ⭐ NEW |
+| 2 | TC-AC-205 | ID Length Validation (7-12 digits) | Validation NEW |
 | 3 | TC-DP-001 | Deposit Money Successfully | Deposits |
 | 4 | TC-WD-101 | Withdraw More Than Balance | Withdrawals |
-| 5 | TC-RM-102 | Transfer with Fee (Current→Savings 3%) | Transfers |
+| 5 | TC-RM-102 | Transfer with Fee (Current to Savings 3%) | Transfers |
 | 6 | TC-RM-203 | Transfer to Same Account Prevention | Validation |
 | 7 | TC-AD-001 | Delete Account Successfully | Account Deletion |
 | 8 | TC-FS-301 | Transfer Rollback on Error | Fault Tolerance |
@@ -143,12 +143,12 @@ Failed:        0
 Skipped:       0
 Pass Rate:     100.00%
 ========================================
-✓ ALL TESTS PASSED!
+ALL TESTS PASSED!
 ```
 
 ---
 
-## 🛠️ Build Scripts
+## Build Scripts
 
 Both build scripts provide a **menu-driven interface** with 6 options:
 
@@ -161,14 +161,14 @@ Both build scripts provide a **menu-driven interface** with 6 options:
 6. Exit
 ```
 
-### 🐧 Shell Script (`run_tests.sh`) - Linux/Mac/Unix
+### Shell Script (`run_tests.sh`) - Linux/Mac/Unix
 
 | Feature | Status |
 |---------|--------|
-| Native shell scripting | ✅ |
-| Fast execution | ✅ |
-| Color-coded output | ✅ |
-| No additional dependencies | ✅ |
+| Native shell scripting | Yes |
+| Fast execution | Yes |
+| Color-coded output | Yes |
+| No additional dependencies | Yes |
 
 **Usage:**
 ```bash
@@ -176,14 +176,14 @@ chmod +x run_tests.sh
 ./run_tests.sh
 ```
 
-### 🪟 Batch File (`run_tests.bat`) - Windows
+### Batch File (`run_tests.bat`) - Windows
 
 | Feature | Status |
 |---------|--------|
-| Native Windows support | ✅ |
-| No dependencies | ✅ |
-| Menu-driven interface | ✅ |
-| Command Prompt compatible | ✅ |
+| Native Windows support | Yes |
+| No dependencies | Yes |
+| Menu-driven interface | Yes |
+| Command Prompt compatible | Yes |
 
 **Usage:**
 ```cmd
@@ -192,33 +192,33 @@ run_tests.bat
 
 ---
 
-## 🎯 Test Coverage
+## Test Coverage
 
 ### Functional Testing
-- ✅ Account Creation (valid and invalid inputs)
-- ✅ Deposit Operations
-- ✅ Withdrawal Operations
-- ✅ Money Transfer (with fee calculation)
-- ✅ Account Deletion
+- Account Creation (valid and invalid inputs)
+- Deposit Operations
+- Withdrawal Operations
+- Money Transfer (with fee calculation)
+- Account Deletion
 
 ### Validation Testing
-- ✅ ID Length (7-12 digits) ⭐ **NEW**
-- ✅ PIN Format (4 digits)
-- ✅ Account Type (Savings/Current)
-- ✅ Monetary Amount (format and range)
-- ✅ Insufficient Funds
+- ID Length (7-12 digits) **NEW**
+- PIN Format (4 digits)
+- Account Type (Savings/Current)
+- Monetary Amount (format and range)
+- Insufficient Funds
 
 ### Security Testing
-- ✅ Buffer Overflow Prevention
-- ✅ Input Validation
-- ✅ Transaction Atomicity
+- Buffer Overflow Prevention
+- Input Validation
+- Transaction Atomicity
 
 ### Integration Testing
-- ✅ Complete Account Lifecycle
-- ✅ Multi-operation Scenarios
-- ✅ Fee Calculation Verification
+- Complete Account Lifecycle
+- Multi-operation Scenarios
+- Fee Calculation Verification
 
-### 💰 Fee Structure
+### Fee Structure
 
 The test suite verifies the following fee structure:
 
@@ -231,7 +231,7 @@ The test suite verifies the following fee structure:
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
@@ -239,7 +239,7 @@ The test suite verifies the following fee structure:
 
 ---
 
-## 🧪 Test Data Reference
+## Test Data Reference
 
 ### Valid Test Accounts
 
@@ -264,7 +264,7 @@ The test suite verifies the following fee structure:
 
 ---
 
-## ⚠️ Before Running Tests
+## Before Running Tests
 
 > **Warning:** Tests will modify the database directory. Make sure to backup important data!
 
@@ -284,7 +284,7 @@ The test suite verifies the following fee structure:
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 <details>
 <summary><b>Tests fail to create database directory</b></summary>
@@ -362,16 +362,16 @@ gcc -o test_suite test_suite.c -lm
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 When adding new test cases:
 
-1. ✏️ Add test function to `test_suite.c`
-2. 🏷️ Use `TEST_START`, `TEST_PASS`, `TEST_FAIL` macros
-3. 🧹 Include setup and cleanup in your test
-4. ✅ Add verification assertions (`ASSERT_*`)
-5. 📝 Update this README with the new test
-6. 📋 Document the test case in `TEST_CASES.md`
+1. Add test function to `test_suite.c`
+2. Use `TEST_START`, `TEST_PASS`, `TEST_FAIL` macros
+3. Include setup and cleanup in your test
+4. Add verification assertions (`ASSERT_*`)
+5. Update this README with the new test
+6. Document the test case in `TEST_CASES.md`
 
 ### Test Function Template
 
@@ -391,7 +391,7 @@ int test_your_feature() {
 
 ---
 
-## ⏱️ Performance Metrics
+## Performance Metrics
 
 | Test Type | Duration |
 |-----------|----------|
@@ -402,30 +402,30 @@ int test_your_feature() {
 
 ---
 
-## 📈 Test Results Summary
+## Test Results Summary
 
 After running tests, you'll see:
-- ✅ **Total Tests** - Number of tests executed
-- ✅ **Passed** - Tests that completed successfully
-- ❌ **Failed** - Tests that encountered errors
-- ⏭️ **Skipped** - Tests that were skipped
-- 📊 **Pass Rate** - Percentage of tests passed
+- **Total Tests** - Number of tests executed
+- **Passed** - Tests that completed successfully
+- **Failed** - Tests that encountered errors
+- **Skipped** - Tests that were skipped
+- **Pass Rate** - Percentage of tests passed
 
 ---
 
-## 📞 Support
+## Support
 
 If you encounter issues with the test suite:
 
-1. 📖 Check this README for troubleshooting steps
-2. 📋 Consult [TEST_CASES.md](TEST_CASES.md) for test details and expected behavior
-3. 🔍 Verify the main application compiles correctly
-4. 📁 Ensure database directory exists in parent folder
-5. 💬 Review error messages carefully
+1. Check this README for troubleshooting steps
+2. Consult [TEST_CASES.md](TEST_CASES.md) for test details and expected behavior
+3. Verify the main application compiles correctly
+4. Ensure database directory exists in parent folder
+5. Review error messages carefully
 
 ---
 
-## 📜 Version History
+## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
@@ -437,9 +437,9 @@ If you encounter issues with the test suite:
 
 <div align="center">
 
-**🏦 Banking System Test Suite**
+**Banking System Test Suite**
 
-Made with ❤️ for COMP1312 Coursework
+Made for COMP1312 Coursework
 
 [Back to Top](#-banking-system-test-suite)
 

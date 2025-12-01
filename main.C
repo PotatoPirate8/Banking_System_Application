@@ -82,6 +82,7 @@ char* safe_fgets(char *buffer, int size, FILE *stream) {
         
         // If we hit EOF while draining, that's still valid input
         // The buffer contains what was read before EOF
+        // This solved so many issues, thank you stack overflow
     }
     
     return buffer;
@@ -717,7 +718,7 @@ int Delete_Bank_Account(void) {
         printf("Invalid input.\n");
         return -1;
     }
-    while (getchar() != '\n'); // Clear newline
+    while (getchar() != '\n');
 
     if (choice == 0) {
         printf("Account deletion cancelled.\n");
@@ -738,7 +739,7 @@ int Delete_Bank_Account(void) {
     printf("Account Type: %s\n", account_types[selected_index]);
 
     // Verify with last 4 digits of ID and PIN
-    char id_last4[100];  // Larger buffer to catch excess input
+    char id_last4[100]; 
     char pin_input[100];
 
     printf("\nFor security, please verify:\n");
