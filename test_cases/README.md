@@ -178,13 +178,6 @@ chmod +x run_tests.sh
 
 ### Batch File (`run_tests.bat`) - Windows
 
-| Feature | Status |
-|---------|--------|
-| Native Windows support | Yes |
-| No dependencies | Yes |
-| Menu-driven interface | Yes |
-| Command Prompt compatible | Yes |
-
 **Usage:**
 ```cmd
 run_tests.bat
@@ -422,16 +415,6 @@ If you encounter issues with the test suite:
 3. Verify the main application compiles correctly
 4. Ensure database directory exists in parent folder
 5. Review error messages carefully
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| v1.0 | Nov 2025 | Initial test suite with 10 critical tests |
-| v1.1 | Nov 2025 | Added ID length validation (7-12 digits) |
-| v1.2 | Nov 2025 | Updated database paths to use parent directory |
 
 ---
 

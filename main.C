@@ -125,7 +125,7 @@ int validate_id(const char *id) {
 int validate_account_type(const char *type) {
     // Case-insensitive comparison
     if (strcasecmp(type, "Savings") == 0 || strcasecmp(type, "Current") == 0) {
-        return 1; // 
+        return 1;
     }
     return 0; // Invalid
 }

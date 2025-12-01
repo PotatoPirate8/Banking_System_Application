@@ -208,7 +208,7 @@ Banking_System_Application/
 ├── README.md                 # Project documentation (this file)
 ├── USER_MANUAL.md            # User guide and instructions
 │
-├── database/                 # Auto-created database directory
+├── database/                # Auto-created database directory
 │   ├── index.txt            # Account index (AccountNumber|Name|ID|Type)
 │   ├── [account_num].txt    # Individual account files
 │   └── transaction_*.log    # Transaction logs
