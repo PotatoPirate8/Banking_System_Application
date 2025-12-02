@@ -336,6 +336,45 @@ int read_account_file(const char *filename, AccountData *account) {
 
 // ==================== INPUT HELPER FUNCTIONS ====================
 
+// Display a limited list of existing bank accounts
+void display_account_list(int max_accounts) {
+    FILE *index_file = fopen("database/index.txt", "r");
+    if (index_file == NULL) {
+        printf("No accounts found in the database.\n");
+        return;
+    }
+
+    printf("\n========================================\n");
+    printf("       Available Bank Accounts\n");
+    printf("========================================\n");
+    
+    char line[512];
+    int count = 0;
+    
+    while (fgets(line, sizeof(line), index_file) && count < max_accounts) {
+        int acc_num;
+        char name[100], id[20], type[20];
+        
+        if (sscanf(line, "%d|%99[^|]|%19[^|]|%19[^\n]", &acc_num, name, id, type) == 4) {
+            count++;
+            printf("%d. Account: %d\n", count, acc_num);
+            printf("   Name: %s\n", name);
+            printf("   Type: %s\n", type);
+            printf("----------------------------------------\n");
+        }
+    }
+    
+    fclose(index_file);
+    
+    if (count == 0) {
+        printf("No accounts found.\n");
+    } else if (count >= max_accounts) {
+        printf("... (showing first %d accounts)\n", max_accounts);
+    }
+    
+    printf("========================================\n\n");
+}
+
 // Get and validate name input
 void get_name_input(char *name, size_t size) {
     while (1) {
@@ -899,6 +938,15 @@ int Deposit_Money(void) {
     printf("          Deposit Money\n");
     printf("========================================\n");
     
+    // Offer to show account list
+    printf("Would you like to see a list of accounts? (yes/no): ");
+    char show_list[10];
+    if (safe_fgets(show_list, sizeof(show_list), stdin) != NULL) {
+        if (strcasecmp(show_list, "yes") == 0 || strcasecmp(show_list, "y") == 0) {
+            display_account_list(10); // Show up to 10 accounts
+        }
+    }
+    
     while (1) {
         printf("Enter your account number: ");
         if (safe_fgets(account_input, sizeof(account_input), stdin) == NULL) {
@@ -1103,6 +1151,15 @@ int Withdraw_Money(void) {
     printf("\n========================================\n");
     printf("          Withdraw Money\n");
     printf("========================================\n");
+    
+    // Offer to show account list
+    printf("Would you like to see a list of accounts? (yes/no): ");
+    char show_list[10];
+    if (safe_fgets(show_list, sizeof(show_list), stdin) != NULL) {
+        if (strcasecmp(show_list, "yes") == 0 || strcasecmp(show_list, "y") == 0) {
+            display_account_list(10); // Show up to 10 accounts
+        }
+    }
     
     while (1) {
         printf("Enter your account number: ");

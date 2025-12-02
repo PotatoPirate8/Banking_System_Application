@@ -1,7 +1,0 @@
-[2025-12-01 09:20:16] SESSION_START - Account: 0 - Amount: RM0.00 - Banking system started - Status: INFO
-[2025-12-01 09:20:16] SESSION_END - Account: 0 - Amount: RM0.00 - Banking system closed - Status: INFO
-[2025-12-02 15:43:26] SESSION_START - Account: 0 - Amount: RM0.00 - Banking system started - Status: INFO
-[2025-12-02 15:43:56] SESSION_START - Account: 0 - Amount: RM0.00 - Banking system started - Status: INFO
-[2025-12-02 15:44:29] SESSION_START - Account: 0 - Amount: RM0.00 - Banking system started - Status: INFO
-[2025-12-02 15:53:34] CREATE_ACCOUNT - Account: 1028620 - Amount: RM0.00 - Name: safwan , Type: Savings - Status: SUCCESS
-[2025-12-02 15:55:24] DEPOSIT - Account: 1028620 - Amount: RM1.00 - Previous Balance: RM0.00, New Balance: RM1.00 - Status: SUCCESS

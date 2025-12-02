@@ -1,6 +1,0 @@
-Name: Wong Jun han
-ID: 12313123
-Account Type: Savings
-PIN: 1234
-Account Number: 1028000
-Current Balance: 12023.00

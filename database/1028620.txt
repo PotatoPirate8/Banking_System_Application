@@ -1,6 +1,0 @@
-Name: safwan 
-ID: 1234567
-Account Type: Savings
-PIN: 1234
-Account Number: 1028620
-Current Balance: 1.00
