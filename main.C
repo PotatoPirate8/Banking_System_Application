@@ -22,11 +22,14 @@
 // ==================== TRANSACTION LOGGING ====================
 
 /**
- * Log transaction details to transaction.log file
+ * Log transaction details to transaction.log file in database directory
  * Records all banking operations for audit trail
  */
 void log_transaction(const char* operation, int account_number, const char* details, double amount, const char* status) {
-    FILE *log_file = fopen("transaction.log", "a");
+    // Ensure database directory exists
+    mkdir("database");
+    
+    FILE *log_file = fopen("database/transaction.log", "a");
     if (log_file != NULL) {
         time_t now = time(NULL);
         char timestamp[64] = "Unknown time";
