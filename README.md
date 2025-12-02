@@ -6,8 +6,11 @@
 [![GCC](https://img.shields.io/badge/GCC-Compiler-blue?style=for-the-badge)](https://gcc.gnu.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)](README.md)
 [![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)](README.md)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/PotatoPirate8/Banking_System_Application)
 
 **A robust C-based banking system with comprehensive error handling, data validation, and transaction management**
+
+🔗 **GitHub Repository:** [github.com/PotatoPirate8/Banking_System_Application](https://github.com/PotatoPirate8/Banking_System_Application)
 
 [Features](#features) | [Quick Start](#quick-start) | [Documentation](#documentation) | [Testing](#testing)
 
